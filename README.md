@@ -52,7 +52,7 @@ As live music and concert culture keeps growing in Vietnam, ticket sales need to
 ├── requirements.txt      # Python dependencies
 ├── database/             # SQL schema + sample data scripts
 ├── SETUP_GUIDE.md        # Step-by-step backend setup instructions
-└── README.md             # This file
+└── README.md             
 ```
 
 ---
