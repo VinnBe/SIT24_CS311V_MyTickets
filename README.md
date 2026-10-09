@@ -2,15 +2,14 @@ MyTicket — Booking Events System
 
 A concert/event ticket-selling system built for our database course project.
 
-**GitHub repo:** https://github.com/VinnBe/SIT24_CS311V_MyTickets
 
 ---
 
 ## Overview
 
-myTickets manages the full lifecycle of selling concert tickets — from creating venues and events, to booking seats and processing payments, to verifying tickets at the gate via QR code.
+MyTickets manages the full lifecycle of selling concert tickets — from creating venues and events, to booking seats and processing payments, to verifying tickets at the gate via QR code.
 
-As live music and concert culture keeps growing in Vietnam, ticket sales need to be fast, accurate, and able to handle many people booking at once. myTickets replaces manual processes (Facebook posts, Google Forms, spreadsheets) with a proper database-backed system that keeps seat availability, payment status, and ticket validity consistent.
+As live music and concert culture keeps growing in Vietnam, ticket sales need to be fast, accurate, and able to handle many people booking at once. MyTickets replaces manual processes (Facebook posts, Google Forms, spreadsheets) with a proper database-backed system that keeps seat availability, payment status, and ticket validity consistent.
 
 ---
 
