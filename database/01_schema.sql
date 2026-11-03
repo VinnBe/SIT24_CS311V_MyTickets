@@ -1,9 +1,9 @@
--- MyTickets | 01_schema.sql
-CREATE DATABASE IF NOT EXISTS myTickets CHARACTER SET utf8mb4;
-USE myTickets;
+
+CREATE DATABASE IF NOT EXISTS MyTickets CHARACTER SET utf8mb4;
+USE MyTickets;
 
 CREATE TABLE venue (
-  venue_id    INT AUTO_INCREMENT PRIMARY KEY,
+  venue_id    INT AUTO_INCREMENT PRIMARY KEY, #AUTO_INCREMENT: ascending order of id
   venue_name  VARCHAR(100) NOT NULL,
   address     VARCHAR(255) NOT NULL
 );
@@ -35,7 +35,7 @@ CREATE TABLE events (
   FOREIGN KEY (venue_id) REFERENCES venue(venue_id) ON DELETE RESTRICT
 );
 
-CREATE TABLE set_price (
+CREATE TABLE has_price (
   event_id   INT NOT NULL,
   zone_id    INT NOT NULL,
   price      DECIMAL(12,0) NOT NULL,

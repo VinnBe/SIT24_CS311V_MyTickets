@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sự kiện — MyTickets</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="stylesheet" href="/css/style.css">
+<script src="/js/api.js"></script>
+</head>
+<body>
+<header id="app-header"></header>
+<main>
+  <span class="eyebrow">Live &amp; sắp diễn ra</span>
+  <h1>Mua vé concert, giữ chỗ an toàn, soát vé bằng QR.</h1>
+  <p class="muted" style="margin-bottom:28px;">Mỗi order giữ chỗ 15 phút, tối đa 2 vé / sự kiện.</p>
+  <div id="list" class="event-grid"><p class="muted">Đang tải...</p></div>
+</main>
+<script>
+requireAuth();
+renderHeader();
+
+async function load() {
+  const events = await apiCall("/events");
+  const list = document.getElementById("list");
+  if (events.length === 0) {
+    list.innerHTML = '<p class="muted">Chưa có sự kiện nào.</p>';
+    return;
+  }
+  list.innerHTML = events.map((e) => {
+    const dim = e.status === "SOLD_OUT" || e.status === "CLOSED";
+    const grad = dim ? "g-dim" : "g" + (e.event_id % 4);
+    return `
+    <a class="event-card ${dim ? "dim" : ""}" href="/event-detail.html?id=${e.event_id}">
+      <div class="event-banner ${grad}">${statusBadge(e.status)}</div>
+      <div class="event-body">
+        <h3>${e.event_name}</h3>
+        <span class="meta">${fmtDate(e.start_time)}</span>
+        <span class="more">Xem chi tiết →</span>
+      </div>
+    </a>`;
+  }).join("");
+}
+load();
+</script>
+</body>
+</html>

@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Admin — MyTickets</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="stylesheet" href="/css/style.css">
+<script src="/js/api.js"></script>
+</head>
+<body>
+<header id="app-header"></header>
+<main>
+  <h1>Trang quản trị</h1>
+
+  <div class="grid-2">
+    <div class="card">
+      <h2 style="margin-top:0">Tạo venue</h2>
+      <label>Tên venue</label>
+      <input id="v_name">
+      <label>Địa chỉ</label>
+      <input id="v_address">
+      <div style="margin-top:12px;"><button onclick="createVenue()">Tạo venue</button></div>
+      <div id="v_msg" class="error"></div>
+    </div>
+
+    <div class="card">
+      <h2 style="margin-top:0">Tạo zone</h2>
+      <label>Venue</label>
+      <select id="z_venue"></select>
+      <label>Tên zone (VD: VIP, Standard)</label>
+      <input id="z_name">
+      <label>Sức chứa (capacity)</label>
+      <input id="z_capacity" type="number" min="1" value="20">
+      <div style="margin-top:12px;"><button onclick="createZone()">Tạo zone</button></div>
+      <div id="z_msg" class="error"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2 style="margin-top:0">Tạo sự kiện</h2>
+    <label>Venue</label>
+    <select id="e_venue" onchange="loadEventZones()"></select>
+    <label>Tên sự kiện</label>
+    <input id="e_name">
+    <div class="grid-2">
+      <div><label>Mở bán (sale_start)</label><input id="e_sale_start" type="datetime-local"></div>
+      <div><label>Bắt đầu (start_time)</label><input id="e_start" type="datetime-local"></div>
+    </div>
+    <label>Kết thúc (end_time)</label>
+    <input id="e_end" type="datetime-local">
+    <h2>Giá theo zone</h2>
+    <div id="e_prices" class="muted">Chọn venue để xem zone</div>
+    <div style="margin-top:12px;"><button onclick="createEvent()">Tạo sự kiện</button></div>
+    <div id="e_msg" class="error"></div>
+  </div>
+
+  <div class="card">
+    <h2 style="margin-top:0">Soát vé tại cổng</h2>
+    <label>Mã QR (order_id-ticket_no)</label>
+    <input id="qr_code" placeholder="VD: 1-1">
+    <div style="margin-top:12px;"><button onclick="doCheckin()">Soát vé</button></div>
+    <div id="checkin_msg"></div>
+  </div>
+</main>
+<script>
+requireAuth(true);
+renderHeader();
+
+async function loadVenues() {
+  const venues = await apiCall("/venues");
+  const opts = venues.map((v) => `<option value="${v.venue_id}">${v.venue_name}</option>`).join("");
+  document.getElementById("z_venue").innerHTML = opts || "<option disabled>Chưa có venue</option>";
+  document.getElementById("e_venue").innerHTML = opts || "<option disabled>Chưa có venue</option>";
+  if (venues.length) loadEventZones();
+}
+
+async function createVenue() {
+  const msg = document.getElementById("v_msg");
+  msg.textContent = "";
+  try {
+    await apiCall("/venues", "POST", {
+      venue_name: document.getElementById("v_name").value.trim(),
+      address: document.getElementById("v_address").value.trim(),
+    });
+    document.getElementById("v_name").value = "";
+    document.getElementById("v_address").value = "";
+    msg.className = "success"; msg.textContent = "Đã tạo venue";
+    loadVenues();
+  } catch (e) { msg.className = "error"; msg.textContent = e.message; }
+}
+
+async function createZone() {
+  const msg = document.getElementById("z_msg");
+  msg.textContent = "";
+  const venueId = document.getElementById("z_venue").value;
+  try {
+    await apiCall(`/venues/${venueId}/zones`, "POST", {
+      zone_name: document.getElementById("z_name").value.trim(),
+      capacity: parseInt(document.getElementById("z_capacity").value, 10),
+    });
+    document.getElementById("z_name").value = "";
+    msg.className = "success"; msg.textContent = "Đã tạo zone (ghế được sinh tự động)";
+    loadEventZones();
+  } catch (e) { msg.className = "error"; msg.textContent = e.message; }
+}
+
+async function loadEventZones() {
+  const venueId = document.getElementById("e_venue").value;
+  if (!venueId) return;
+  const zones = await apiCall(`/venues/${venueId}/zones`);
+  const el = document.getElementById("e_prices");
+  el.innerHTML = zones.length === 0 ? '<p class="muted">Venue chưa có zone</p>' : zones.map((z) => `
+    <label>${z.zone_name} (sức chứa ${z.capacity})</label>
+    <input class="zone-price" data-zone-id="${z.zone_id}" type="number" min="0" placeholder="Giá vé">
+  `).join("");
+}
+
+function toIso(local) {
+  // datetime-local -> ISO (giả định đã là UTC cho demo đơn giản)
+  return local ? local + ":00" : "";
+}
+
+async function createEvent() {
+  const msg = document.getElementById("e_msg");
+  msg.textContent = "";
+  const prices = {};
+  document.querySelectorAll(".zone-price").forEach((inp) => {
+    prices[inp.dataset.zoneId] = parseFloat(inp.value || "0");
+  });
+  try {
+    await apiCall("/events", "POST", {
+      venue_id: parseInt(document.getElementById("e_venue").value, 10),
+      event_name: document.getElementById("e_name").value.trim(),
+      sale_start: toIso(document.getElementById("e_sale_start").value),
+      start_time: toIso(document.getElementById("e_start").value),
+      end_time: toIso(document.getElementById("e_end").value),
+      prices,
+    });
+    msg.className = "success"; msg.textContent = "Đã tạo sự kiện và phát hành vé";
+    document.getElementById("e_name").value = "";
+  } catch (e) { msg.className = "error"; msg.textContent = e.message; }
+}
+
+async function doCheckin() {
+  const el = document.getElementById("checkin_msg");
+  el.className = ""; el.textContent = "";
+  try {
+    const res = await apiCall("/checkin", "POST", { qr_code: document.getElementById("qr_code").value.trim() });
+    el.className = "success"; el.textContent = res.message;
+  } catch (e) { el.className = "error"; el.textContent = e.message; }
+}
+
+loadVenues();
+</script>
+</body>
+</html>

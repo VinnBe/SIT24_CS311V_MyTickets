@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Đăng ký — MyTickets</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="stylesheet" href="/css/style.css">
+<script src="/js/api.js"></script>
+</head>
+<body>
+<header id="app-header"></header>
+<main>
+  <div class="card auth-card">
+  <h1 style="font-size:26px;">Đăng ký tài khoản</h1>
+  <div class="form">
+    <label>Họ tên</label>
+    <input id="full_name">
+    <label>Email</label>
+    <input id="email" type="email">
+    <label>Số điện thoại</label>
+    <input id="phone">
+    <label>Username</label>
+    <input id="username" autocomplete="username">
+    <label>Password</label>
+    <input id="password" type="password" autocomplete="new-password">
+    <div style="margin-top:16px;">
+      <button onclick="doRegister()">Đăng ký</button>
+    </div>
+    <div id="msg" class="error"></div>
+    <p class="muted" style="margin-top:16px;">Đã có tài khoản? <a href="/login.html">Đăng nhập</a></p>
+  </div>
+  </div>
+</main>
+<script>
+renderHeader();
+async function doRegister() {
+  const payload = {
+    full_name: document.getElementById("full_name").value.trim(),
+    email: document.getElementById("email").value.trim(),
+    phone: document.getElementById("phone").value.trim(),
+    username: document.getElementById("username").value.trim(),
+    password: document.getElementById("password").value,
+  };
+  const msg = document.getElementById("msg");
+  msg.textContent = "";
+  try {
+    await apiCall("/register", "POST", payload);
+    const u = await apiCall("/login", "POST", { username: payload.username, password: payload.password });
+    window.location.href = "/events.html";
+  } catch (e) {
+    msg.textContent = e.message;
+  }
+}
+</script>
+</body>
+</html>

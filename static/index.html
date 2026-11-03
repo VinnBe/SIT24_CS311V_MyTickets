@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MyTickets</title>
+<script src="/js/api.js"></script>
+</head>
+<body>
+<script>
+currentUser().then((u) => {
+  if (!u) window.location.href = "/login.html";
+  else if (u.is_admin) window.location.href = "/admin.html";
+  else window.location.href = "/events.html";
+});
+</script>
+</body>
+</html>

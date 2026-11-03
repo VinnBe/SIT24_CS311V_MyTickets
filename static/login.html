@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Đăng nhập — MyTickets</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="stylesheet" href="/css/style.css">
+<script src="/js/api.js"></script>
+</head>
+<body>
+<header id="app-header"></header>
+<main>
+  <div class="card auth-card">
+  <h1 style="font-size:26px;">Đăng nhập</h1>
+  <p class="muted">Đăng nhập để đặt vé và xem vé đã mua</p>
+  <div class="form">
+    <label>Username</label>
+    <input id="username" autocomplete="username">
+    <label>Password</label>
+    <input id="password" type="password" autocomplete="current-password">
+    <div style="margin-top:16px;">
+      <button onclick="doLogin()">Đăng nhập</button>
+    </div>
+    <div id="msg" class="error"></div>
+    <p class="muted" style="margin-top:16px;">Chưa có tài khoản? <a href="/register.html">Đăng ký</a></p>
+    <p class="muted">Admin demo: username <code>admin</code> / password <code>admin123</code></p>
+  </div>
+  </div>
+</main>
+<script>
+renderHeader();
+document.getElementById("password").addEventListener("keydown", (e) => { if (e.key === "Enter") doLogin(); });
+
+async function doLogin() {
+  const username = document.getElementById("username").value.trim();
+  const password = document.getElementById("password").value;
+  const msg = document.getElementById("msg");
+  msg.textContent = "";
+  try {
+    const u = await apiCall("/login", "POST", { username, password });
+    window.location.href = u.is_admin ? "/admin.html" : "/events.html";
+  } catch (e) {
+    msg.textContent = e.message;
+  }
+}
+</script>
+</body>
+</html>
