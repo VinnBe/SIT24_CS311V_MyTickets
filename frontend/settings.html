@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cài đặt tài khoản | MyTickets</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;600;700;800&display=swap">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="topbar-wrap">
+  <header class="topbar">
+    <a class="brand" href="index.html">mytickets</a>
+    <nav id="nav" class="nav" aria-label="Điều hướng chính"></nav>
+  </header>
+</div>
+<main class="wrap" id="acctRoot"></main>
+<footer class="footer">
+  <div class="wrap">mytickets, đồ án môn Nhập môn cơ sở dữ liệu. Mỗi tài khoản mua tối đa 2 vé cho mỗi sự kiện.</div>
+</footer>
+<script src="js/api.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/account.js"></script>
+<script>
+Object.assign(FRIENDLY, {
+  "Email da duoc su dung": "Email này đã được dùng cho tài khoản khác.",
+  "Email khong hop le": "Email chưa hợp lệ.",
+  "So dien thoai khong hop le": "Số điện thoại chưa hợp lệ.",
+  "Ho ten toi da 100 ky tu": "Họ tên tối đa 100 ký tự.",
+  "Mat khau hien tai khong dung": "Mật khẩu hiện tại chưa đúng.",
+  "Mat khau moi phai khac mat khau hien tai": "Mật khẩu mới phải khác mật khẩu hiện tại.",
+  "Tai khoan khong ton tai": "Không tìm thấy tài khoản.",
+});
+
+(async () => {
+  const page = await AccountShell.mount({ active: "settings", title: "Cài đặt tài khoản", crumbs: [["Cài đặt tài khoản"]] });
+  if (!page) return;
+  page.body.innerHTML = `<h1>Cài đặt tài khoản</h1><hr>
+  <div class="prof">
+    <section class="panel">
+      <h2>Thông tin cá nhân</h2>
+      <form id="infoForm" novalidate>
+        <label class="field">Tên đăng nhập<input id="username" disabled></label>
+        <label class="field">Họ và tên<input id="full_name" autocomplete="name"><span class="field__err" id="full_nameErr"></span></label>
+        <label class="field">Email<input id="email" type="email" autocomplete="email"><span class="field__err" id="emailErr"></span></label>
+        <label class="field">Số điện thoại<input id="phone" type="tel" inputmode="tel" autocomplete="tel"><span class="field__err" id="phoneErr"></span></label>
+        <p id="infoMsg" class="msg" role="alert" hidden></p>
+        <button class="btn" id="infoBtn" type="submit">Lưu thay đổi</button>
+      </form>
+    </section>
+    <section class="panel">
+      <h2>Đổi mật khẩu</h2>
+      <form id="pwForm" novalidate>
+        <label class="field">Mật khẩu hiện tại<input id="old_password" type="password" autocomplete="current-password"><span class="field__err" id="old_passwordErr"></span></label>
+        <label class="field">Mật khẩu mới (ít nhất 6 ký tự)<input id="new_password" type="password" autocomplete="new-password"><span class="field__err" id="new_passwordErr"></span></label>
+        <label class="field">Nhập lại mật khẩu mới<input id="confirm" type="password" autocomplete="new-password"><span class="field__err" id="confirmErr"></span></label>
+        <p id="pwMsg" class="msg" role="alert" hidden></p>
+        <button class="btn" id="pwBtn" type="submit">Đổi mật khẩu</button>
+      </form>
+    </section>
+  </div>`;
+  const $ = (id) => document.getElementById(id);
+
+  function setErr(input, text) {
+    input.setAttribute("aria-invalid", text ? "true" : "false");
+    $(input.id + "Err").textContent = text || "";
+    return !text;
+  }
+  const busy = (btn, on, text) => {
+    if (on) btn.dataset.label = btn.textContent;
+    btn.disabled = on;
+    btn.textContent = on ? text : btn.dataset.label;
+  };
+  function fill(p) {
+    $("username").value = p.username;
+    $("full_name").value = p.full_name;
+    $("email").value = p.email;
+    $("phone").value = p.phone;
+  }
+  try { fill(await API.get("/profile")); }
+  catch (err) { showMsg($("infoMsg"), err.message, "error"); return; }
+
+  const info = [
+    [$("full_name"), (v) => v.trim() ? "" : "Vui lòng nhập họ và tên"],
+    [$("email"), (v) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim()) ? "" : "Email chưa đúng định dạng"],
+    [$("phone"), (v) => /^\+?[0-9 ]{9,15}$/.test(v.trim()) ? "" : "Số điện thoại chưa hợp lệ"],
+  ];
+  info.forEach(([i, c]) => i.addEventListener("input", () => { if (i.getAttribute("aria-invalid") === "true") setErr(i, c(i.value)); }));
+
+  $("infoForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    showMsg($("infoMsg"), "");
+    let bad = null;
+    info.forEach(([i, c]) => { if (!setErr(i, c(i.value)) && !bad) bad = i; });
+    if (bad) { bad.focus(); return; }
+    busy($("infoBtn"), true, "Đang lưu...");
+    try {
+      fill(await API.request("PUT", "/profile", {
+        full_name: $("full_name").value.trim(), email: $("email").value.trim(), phone: $("phone").value.trim(),
+      }));
+      showMsg($("infoMsg"), "Đã lưu thay đổi.", "ok");
+      const me = await getMe();
+      renderNav(me);
+      const side = document.querySelector(".as__who strong"); if (side) side.textContent = me.full_name;
+      const av = document.querySelector(".as__avatar"); if (av) av.textContent = [...(me.full_name.trim().split(/\s+/).pop() || "?")][0].toUpperCase();
+    } catch (err) { showMsg($("infoMsg"), err.message, "error"); }
+    busy($("infoBtn"), false);
+  });
+
+  const pw = [
+    [$("old_password"), (v) => v ? "" : "Vui lòng nhập mật khẩu hiện tại"],
+    [$("new_password"), (v) => v.length >= 6 ? "" : "Mật khẩu mới cần ít nhất 6 ký tự"],
+    [$("confirm"), (v) => v === $("new_password").value ? "" : "Mật khẩu nhập lại chưa khớp"],
+  ];
+  pw.forEach(([i, c]) => i.addEventListener("input", () => { if (i.getAttribute("aria-invalid") === "true") setErr(i, c(i.value)); }));
+
+  $("pwForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    showMsg($("pwMsg"), "");
+    let bad = null;
+    pw.forEach(([i, c]) => { if (!setErr(i, c(i.value)) && !bad) bad = i; });
+    if (bad) { bad.focus(); return; }
+    busy($("pwBtn"), true, "Đang đổi...");
+    try {
+      await API.post("/change-password", { old_password: $("old_password").value, new_password: $("new_password").value });
+      $("pwForm").reset();
+      showMsg($("pwMsg"), "Đã đổi mật khẩu.", "ok");
+    } catch (err) {
+      showMsg($("pwMsg"), err.message, "error");
+      if (/hiện tại/.test(err.message)) $("old_password").select();
+    }
+    busy($("pwBtn"), false);
+  });
+})();
+</script>
+</body>
+</html>

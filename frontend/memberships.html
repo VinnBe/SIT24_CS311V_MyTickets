@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Thẻ thành viên | MyTickets</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;600;700;800&display=swap">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="topbar-wrap">
+  <header class="topbar">
+    <a class="brand" href="index.html">mytickets</a>
+    <nav id="nav" class="nav" aria-label="Điều hướng chính"></nav>
+  </header>
+</div>
+<main class="wrap" id="acctRoot"></main>
+<footer class="footer">
+  <div class="wrap">mytickets, đồ án môn Nhập môn cơ sở dữ liệu. Mỗi tài khoản mua tối đa 2 vé cho mỗi sự kiện.</div>
+</footer>
+<script src="js/api.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/account.js"></script>
+<script>
+(async () => {
+  const page = await AccountShell.mount({ active: "memberships", title: "Thẻ thành viên",
+    crumbs: [["Đơn hàng của tôi", "my-orders.html"], ["Thẻ thành viên"]] });
+  if (!page) return;
+  const TABS = ["Đang hoạt động", "Đã hết hạn", "Đã huỷ"];
+  const MSG = ["Bạn chưa có thẻ nào đang hoạt động", "Bạn chưa có thẻ nào đã hết hạn", "Bạn chưa có thẻ nào đã huỷ"];
+  page.body.innerHTML = "<h1>Thẻ thành viên</h1><hr>" +
+    '<div class="as__tabs" role="tablist">' + TABS.map((t, i) =>
+      '<button type="button" class="as__tab" role="tab" aria-selected="' + (i === 0) + '" data-i="' + i + '">' + t + "</button>").join("") + "</div>" +
+    '<p class="muted" id="memMsg" style="text-align:center;padding:22px 0"></p>';
+  const msg = document.getElementById("memMsg");
+  const show = (i) => {
+    msg.textContent = MSG[i];
+    page.body.querySelectorAll(".as__tab").forEach((b) => b.setAttribute("aria-selected", String(+b.dataset.i === i)));
+  };
+  page.body.querySelectorAll(".as__tab").forEach((b) => b.addEventListener("click", () => show(+b.dataset.i)));
+  show(0);
+})();
+</script>
+</body>
+</html>

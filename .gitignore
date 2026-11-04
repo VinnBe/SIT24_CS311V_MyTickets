@@ -3,3 +3,6 @@ config.py
 __pycache__/
 *.pyc
 mytickets.db
+backend/.env
+backend/venv/
+__pycache__/

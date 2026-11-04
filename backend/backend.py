@@ -29,6 +29,7 @@ from werkzeug.security import check_password_hash, generate_password_hash
 
 import Schema
 
+
 # ======================================================================
 # 1. CAU HINH
 # ======================================================================
@@ -126,6 +127,7 @@ class JSONProvider(DefaultJSONProvider):
 
 
 app = Flask(__name__, static_folder=FRONTEND_DIR, static_url_path="")
+
 app.config.update(
     SECRET_KEY=os.environ.get("SECRET_KEY", "dev-only-change-me"),
     SESSION_COOKIE_HTTPONLY=True,
@@ -373,6 +375,12 @@ def checkin():
     d = body(Schema.CHECKIN)
     sets, _ = call_proc("sp_checkin_ticket", (d["qrcode"],))
     return jsonify(ok=True, ticket=sets[0][0] if sets and sets[0] else {})
+
+# ======================================================================
+# 7b. TAI KHOAN: xem / sua ho so, doi mat khau (xem account.py)
+# ======================================================================
+import account
+account.init(app, query_one, get_connection, login_required, ApiError)
 
 # ======================================================================
 # 8. TIEN TRINH NEN: moi phut huy order qua han
