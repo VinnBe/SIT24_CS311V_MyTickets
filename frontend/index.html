@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MyTickets | Vé concert và sự kiện</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;600;700;800&display=swap">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="topbar-wrap">
+  <header class="topbar">
+    <a class="brand" href="index.html">mytickets</a>
+    <input id="search" class="search" type="search" placeholder="Bạn tìm sự kiện gì hôm nay?" aria-label="Tìm sự kiện">
+    <nav id="nav" class="nav" aria-label="Điều hướng chính"></nav>
+  </header>
+</div>
+<div class="subnav-wrap">
+  <nav class="subnav" aria-label="Các mục trên trang">
+    <a href="#noi-bat">Nổi bật</a>
+    <a href="#ban-chay">Bán chạy</a>
+    <a href="#sap-mo-ban">Sắp mở bán</a>
+    <a href="#tat-ca">Tất cả sự kiện</a>
+  </nav>
+</div>
+
+<main id="main" class="wrap">
+  <p id="msg" class="msg" hidden></p>
+
+  <section id="noi-bat" class="section hide-on-search">
+    <div id="banners" class="banners"></div>
+  </section>
+
+  <section id="ban-chay" class="section hide-on-search" hidden>
+    <div class="section-head"><h2>Bán chạy nhất</h2></div>
+    <div id="ranks" class="ranks"></div>
+  </section>
+
+  <section id="sap-mo-ban" class="section hide-on-search" hidden>
+    <div class="section-head"><h2>Sắp mở bán</h2></div>
+    <div id="upcoming" class="grid"></div>
+  </section>
+
+  <section id="tat-ca" class="section">
+    <div class="section-head">
+      <h2 id="allTitle">Tất cả sự kiện</h2>
+      <div class="chips" role="group" aria-label="Lọc theo trạng thái">
+        <button class="chip" type="button" data-filter="ALL" aria-pressed="true">Tất cả</button>
+        <button class="chip" type="button" data-filter="ON_SALE" aria-pressed="false">Đang mở bán</button>
+        <button class="chip" type="button" data-filter="UPCOMING" aria-pressed="false">Sắp mở bán</button>
+        <button class="chip" type="button" data-filter="STARTED" aria-pressed="false">Đã diễn ra</button>
+      </div>
+    </div>
+    <div id="grid" class="grid"><p class="empty">Đang tải sự kiện...</p></div>
+  </section>
+</main>
+
+<footer class="footer">
+  <div class="wrap">mytickets, đồ án môn Nhập môn cơ sở dữ liệu. Mỗi tài khoản mua tối đa 2 vé cho mỗi sự kiện.</div>
+</footer>
+
+<script src="js/api.js"></script>
+<script src="js/events.js"></script>
+</body>
+</html>
