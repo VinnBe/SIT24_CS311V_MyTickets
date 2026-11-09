@@ -109,7 +109,7 @@ function renderNav(me) {
   if (!nav) return;
   const links = [["index.html", "Sự kiện"]];
   if (me.logged_in && me.role === "customer") links.push(["my-orders.html", "Vé của tôi"]);
-  if (me.logged_in && me.role === "admin") links.push(["checkin.html", "Soát vé"]);
+  if (me.logged_in && me.role === "admin") links.push(["admin.html", "Quản trị"]);
 
   const here = currentPage();
   let html = links.map(([href, text]) =>

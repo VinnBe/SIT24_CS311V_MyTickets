@@ -381,6 +381,8 @@ def checkin():
 # ======================================================================
 import account
 account.init(app, query_one, get_connection, login_required, ApiError)
+import admin_api
+admin_api.init(app, query_all, query_one, get_connection, admin_required, ApiError)
 
 # ======================================================================
 # 8. TIEN TRINH NEN: moi phut huy order qua han

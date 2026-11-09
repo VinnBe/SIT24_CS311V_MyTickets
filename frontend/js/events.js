@@ -26,12 +26,60 @@ function untilText(s) {
   return "Mở bán sau " + h + " giờ " + (m % 60) + " phút";
 }
 
+// "2026-12-20 19:00:00" -> "20.12.2026"
+function fmtDay(s) {
+  const d = parseDt(s);
+  return d ? pad(d.getDate()) + "." + pad(d.getMonth() + 1) + "." + d.getFullYear() : "";
+}
+
 function banner(e) {
-  return '<a class="banner poster" style="' + posterStyle(e.event_id) + '" href="event.html?id=' + e.event_id + '">' +
-    "<div>" + statusPill(e) + "</div>" +
+  return '<a class="banner" style="' + posterStyle(e.event_id) + '" href="event.html?id=' + e.event_id + '">' +
+    statusPill(e) +
     '<h2 class="banner__title">' + esc(e.event_name) + "</h2>" +
-    '<p class="banner__meta">' + fmtDt(e.start_time) + "<br>" + esc(e.venue_name) + "</p>" +
-    '<span class="btn">' + (e.sale_status === "ON_SALE" ? "Mua vé ngay" : "Xem chi tiết") + "</span></a>";
+    '<p class="banner__date">' + fmtDay(e.start_time) + "</p>" +
+    '<p class="banner__venue">' + esc(e.venue_name) + "</p>" +
+    '<span class="banner__btn">Xem chi tiết</span></a>';
+}
+
+// Carousel: nut trai/phai, tu chuyen moi 5 giay, dung khi re chuot vao hoac bam nut tam dung
+const ICON_PAUSE = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="5" width="4" height="14"/><rect x="14" y="5" width="4" height="14"/></svg>';
+const ICON_PLAY = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 5l12 7-12 7z"/></svg>';
+
+function initCarousel() {
+  const track = document.getElementById("banners");
+  const prev = document.getElementById("heroPrev");
+  const next = document.getElementById("heroNext");
+  const play = document.getElementById("heroPlay");
+  const step = () => (track.firstElementChild ? track.firstElementChild.offsetWidth + 18 : track.clientWidth);
+  const atEnd = () => track.scrollLeft + track.clientWidth >= track.scrollWidth - 4;
+
+  function go(dir) {
+    if (dir > 0 && atEnd()) track.scrollTo({ left: 0 });
+    else if (dir < 0 && track.scrollLeft <= 4) track.scrollTo({ left: track.scrollWidth });
+    else track.scrollBy({ left: dir * step() });
+  }
+  prev.addEventListener("click", () => go(-1));
+  next.addEventListener("click", () => go(1));
+
+  // It banner qua thi an het nut
+  const many = track.scrollWidth > track.clientWidth + 4;
+  prev.hidden = next.hidden = play.hidden = !many;
+  if (!many) return;
+
+  const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  let playing = !reduce, hover = false;
+  function paint() {
+    play.innerHTML = playing ? ICON_PAUSE : ICON_PLAY;
+    play.setAttribute("aria-label", playing ? "Tạm dừng tự chuyển" : "Bật tự chuyển");
+  }
+  play.addEventListener("click", () => { playing = !playing; paint(); });
+  const hero = document.getElementById("hero");
+  hero.addEventListener("mouseenter", () => { hover = true; });
+  hero.addEventListener("mouseleave", () => { hover = false; });
+  hero.addEventListener("focusin", () => { hover = true; });
+  hero.addEventListener("focusout", () => { hover = false; });
+  setInterval(() => { if (playing && !hover && !document.hidden) go(1); }, 5000);
+  paint();
 }
 
 function rankCard(e, i) {
@@ -82,10 +130,13 @@ function card(e) {
     return;
   }
 
-  // 1. Noi bat: toi da 2 su kien dang mo ban con ve (neu khong co thi lay su kien bat ky)
-  let featured = events.filter((e) => e.sale_status === "ON_SALE" && e.left > 0).slice(0, 2);
+  // 1. Noi bat: toi da 6 su kien chua dien ra, uu tien dang mo ban con ve, roi den sap mo ban
+  const rank = (e) => (e.sale_status === "ON_SALE" && e.left > 0 ? 0 : e.sale_status === "UPCOMING" ? 1 : 2);
+  let featured = events.filter((e) => e.sale_status !== "STARTED")
+    .sort((a, b) => rank(a) - rank(b) || parseDt(a.start_time) - parseDt(b.start_time)).slice(0, 6);
   if (!featured.length) featured = events.slice(0, 2);
   $("banners").innerHTML = featured.map(banner).join("");
+  initCarousel();
 
   // 2. Ban chay: su kien dang mo ban, xep theo ti le da ban
   const ranks = events.filter((e) => e.sale_status === "ON_SALE" && e.sold_pct > 0)

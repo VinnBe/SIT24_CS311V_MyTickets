@@ -30,7 +30,16 @@
   <p id="msg" class="msg" hidden></p>
 
   <section id="noi-bat" class="section hide-on-search">
-    <div id="banners" class="banners"></div>
+    <div class="hero" id="hero" aria-roledescription="carousel" aria-label="Sự kiện nổi bật">
+      <div id="banners" class="hero__track"></div>
+      <button type="button" class="hero__nav hero__nav--prev" id="heroPrev" aria-label="Sự kiện trước">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>
+      </button>
+      <button type="button" class="hero__nav hero__nav--next" id="heroNext" aria-label="Sự kiện tiếp theo">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>
+      </button>
+      <button type="button" class="hero__play" id="heroPlay" aria-label="Tạm dừng tự chuyển"></button>
+    </div>
   </section>
 
   <section id="ban-chay" class="section hide-on-search" hidden>

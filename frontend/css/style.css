@@ -86,16 +86,72 @@ h2 { font-size: 1.35rem; line-height: 1.25; margin: 36px 0 14px; font-weight: 80
 }
 .poster > * { position: relative; z-index: 1; }
 
-/* ---------- Banner doi ---------- */
-.banners { display: grid; grid-template-columns: repeat(2, 1fr); gap: 18px; }
-.banner {
-  aspect-ratio: 16 / 9; border-radius: 18px; padding: clamp(18px, 3vw, 30px);
-  display: flex; flex-direction: column; justify-content: flex-end; text-decoration: none;
+/* ---------- Banner noi bat: carousel kieu poster concert ---------- */
+.hero { position: relative; }
+.hero__track {
+  display: flex; gap: 18px; overflow-x: auto; scroll-snap-type: x mandatory;
+  scroll-behavior: smooth; scrollbar-width: none;
 }
-.banner__title { font-size: clamp(1.6rem, 3vw, 2.4rem); line-height: 1.05; letter-spacing: -0.03em; margin: 10px 0 8px; font-weight: 800; }
-.banner__meta { margin: 0 0 14px; font-weight: 600; opacity: .92; }
-.banner .btn { align-self: flex-start; background: #FFFFFF; border-color: #FFFFFF; color: #17171C; }
-.banner .pill, .card .pill { background: rgba(15,15,19,.6); }
+.hero__track::-webkit-scrollbar { display: none; }
+
+.banner {
+  flex: 0 0 calc(50% - 9px); scroll-snap-align: start;
+  aspect-ratio: 16 / 9; border-radius: 16px; border: 1px solid rgba(255,255,255,.14);
+  position: relative; overflow: hidden; text-decoration: none; color: #FFFFFF;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  padding: 24px 24px 64px; text-align: center;
+  /* nen dem toi, 2 quang sang mau rieng cua su kien + chum den san khau */
+  background:
+    conic-gradient(from 180deg at 50% -10%, transparent 160deg, rgba(255,255,255,.16) 176deg, rgba(255,255,255,.28) 180deg, rgba(255,255,255,.16) 184deg, transparent 200deg),
+    radial-gradient(ellipse 60% 55% at 15% 100%, var(--c1), transparent 70%),
+    radial-gradient(ellipse 55% 60% at 90% 0%, var(--c2), transparent 70%),
+    #140F24;
+}
+.banner::after { /* hat sang li ti nhu den san khau */
+  content: ""; position: absolute; inset: 0; pointer-events: none; opacity: .5;
+  background-image:
+    radial-gradient(1.5px 1.5px at 20% 30%, #FFF, transparent),
+    radial-gradient(1px 1px at 70% 20%, #FFF, transparent),
+    radial-gradient(1.5px 1.5px at 85% 60%, #FFF, transparent),
+    radial-gradient(1px 1px at 35% 75%, #FFF, transparent),
+    radial-gradient(1px 1px at 55% 45%, #FFF, transparent);
+}
+.banner > * { position: relative; z-index: 1; }
+.banner .pill { position: absolute; top: 16px; left: 16px; background: rgba(15,15,19,.6); }
+.banner__title {
+  margin: 0; font-size: clamp(1.5rem, 3vw, 2.3rem); line-height: 1.08; font-weight: 800;
+  letter-spacing: -0.02em; max-width: 18ch; text-wrap: balance;
+  text-shadow: 0 2px 18px rgba(0,0,0,.45);
+}
+.banner__date {
+  margin: 12px 0 2px; font-size: clamp(1.8rem, 4vw, 3rem); line-height: 1; font-weight: 800;
+  letter-spacing: -0.01em; font-variant-numeric: tabular-nums;
+}
+.banner__venue { margin: 6px 0 0; font-weight: 600; opacity: .9; }
+.banner__btn {
+  position: absolute; left: 16px; bottom: 16px;
+  background: #FFFFFF; color: #17171C; border-radius: 8px;
+  padding: 8px 18px; font-weight: 700; font-size: .95rem;
+}
+.banner:hover .banner__btn { background: var(--accent); color: var(--accent-ink); }
+.card .pill { background: rgba(15,15,19,.6); }
+
+.hero__nav {
+  position: absolute; top: 50%; transform: translateY(-50%); z-index: 2;
+  width: 40px; height: 64px; display: grid; place-items: center;
+  border: 0; border-radius: 8px; background: rgba(15,15,19,.65); color: #FFFFFF; cursor: pointer;
+}
+.hero__nav:hover { background: rgba(15,15,19,.9); }
+.hero__nav svg { width: 22px; height: 22px; }
+.hero__nav--prev { left: 10px; }
+.hero__nav--next { right: 10px; }
+.hero__nav[hidden], .hero__play[hidden] { display: none; }
+.hero__play {
+  position: absolute; right: 16px; bottom: 16px; z-index: 2;
+  width: 34px; height: 34px; display: grid; place-items: center;
+  border: 0; border-radius: 6px; background: rgba(255,255,255,.85); color: #17171C; cursor: pointer;
+}
+.hero__play svg { width: 16px; height: 16px; }
 
 /* ---------- Ban chay (xep hang) ---------- */
 .ranks { display: grid; gap: 18px; grid-template-columns: repeat(auto-fill, minmax(270px, 1fr)); }
@@ -216,13 +272,302 @@ th { color: var(--muted); font-weight: 600; font-size: .9rem; }
 td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
 tfoot td { font-weight: 800; border-bottom: 0; }
 
+/* ---------- Trang chi tiet su kien (event.html) ---------- */
+.ev {
+  display: grid; grid-template-columns: minmax(300px, 0.85fr) 1.5fr;
+  background: var(--surface); border-radius: 20px; overflow: hidden; margin-top: 8px;
+}
+.ev__info { position: relative; display: flex; flex-direction: column; padding: 28px 30px; }
+/* 2 vet khuyet tron o duong noi giua the va poster, giong cuong ve */
+.ev__info::before, .ev__info::after {
+  content: ""; position: absolute; right: -22px; width: 44px; height: 44px; border-radius: 50%;
+  background: var(--bg); z-index: 2;
+}
+.ev__info::before { top: -22px; }
+.ev__info::after { bottom: -22px; }
+.ev__title { font-size: 1.3rem; line-height: 1.35; margin: 0 0 16px; letter-spacing: 0; }
+.ev__row { display: flex; gap: 10px; align-items: flex-start; margin: 0 0 12px; color: var(--accent); font-weight: 700; font-size: .95rem; }
+.ev__row .icon { width: 18px; height: 18px; margin-top: 2px; color: var(--ink); }
+.ev__addr { display: block; color: var(--muted); font-weight: 400; font-size: .88rem; margin-top: 2px; }
+.ev__buy { margin-top: auto; padding-top: 20px; border-top: 1px solid var(--line); }
+.ev__from { display: inline-flex; align-items: center; gap: 8px; margin: 0 0 14px; font-weight: 700; text-decoration: none; }
+.ev__from strong { color: var(--accent); font-size: 1.6rem; }
+.ev__from .icon { color: var(--muted); }
+.ev__poster { aspect-ratio: 16 / 9; border-radius: 0; border: 0; padding: 24px; }
+
+.ev-sec { background: var(--surface); border-radius: var(--radius); overflow: hidden; margin-top: 28px; }
+.ev-sec__head { margin: 0; padding: 14px 22px; font-size: 1.05rem; color: var(--accent); border-bottom: 1px solid var(--line); }
+.ev-sec__body { padding: 18px 22px; max-width: 80ch; }
+.ev-sec__body p { margin: 0 0 10px; }
+.ev-tix { list-style: none; margin: 0; padding: 0; }
+.ev-tix li { display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 12px 0; border-bottom: 1px solid var(--line); }
+.ev-tix li:last-child { border-bottom: 0; }
+.ev-tix small { display: block; font-size: .85rem; }
+.ev-tix__out { color: var(--bad); }
+.ev-tix__price { color: var(--accent); font-weight: 800; white-space: nowrap; }
+
+@media (max-width: 860px) {
+  .ev { grid-template-columns: 1fr; }
+  .ev__poster { order: -1; }
+  .ev__info::before, .ev__info::after { display: none; }
+}
+
+/* ---------- Trang chon ve (booking.html), bo cuc kieu ticketbox ---------- */
+.bk-body { background: #000; }
+.bk { display: grid; grid-template-columns: minmax(0, 1fr) 380px; min-height: calc(100vh - 64px); }
+.bk__map { padding: 18px 24px 40px; min-width: 0; }
+.bk__back { display: inline-flex; align-items: center; gap: 8px; color: var(--accent); font-weight: 700; text-decoration: none; }
+.bk__back .icon { width: 20px; height: 20px; }
+.bk__head { text-align: center; margin: 4px 0 22px; }
+.bk__head h1 { font-size: 1.15rem; color: var(--accent); margin: 0; letter-spacing: 0; }
+.bk__head p { margin: 2px 0 0; color: var(--ink); font-size: .95rem; }
+
+.bk-map { max-width: 860px; margin: 0 auto; display: flex; flex-direction: column; gap: 10px; }
+.bk-stage {
+  align-self: center; width: min(420px, 70%); padding: 18px 0; margin-bottom: 14px;
+  background: #C9C9D1; color: #26262C; text-align: center;
+  font-size: clamp(1.4rem, 3.5vw, 2.4rem); font-weight: 800; letter-spacing: .02em;
+  border-radius: 6px 6px 40% 40% / 6px 6px 30px 30px;
+}
+.bk-row { display: flex; gap: 10px; }
+.bk-zone {
+  flex: 1 1 0; min-width: 84px; min-height: 76px; padding: 10px 8px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+  background: var(--c); color: #111; border: 3px solid transparent; border-radius: 6px;
+  font: inherit; cursor: pointer; transition: transform .12s, filter .12s;
+}
+.bk-zone strong { font-size: clamp(.95rem, 1.8vw, 1.3rem); font-weight: 800; line-height: 1.1; }
+.bk-zone small { font-size: .78rem; font-weight: 700; }
+.bk-zone:hover:not(:disabled) { filter: brightness(1.12); }
+.bk-zone.is-on { border-color: #FFF; box-shadow: 0 0 0 3px var(--accent); transform: scale(1.02); }
+.bk-zone.is-out { background: #3A3A42; color: #8A8A93; cursor: not-allowed; }
+.bk-foh { align-self: center; margin-top: 10px; padding: 8px 18px; background: #3A3A42; color: #D4D4D8; border-radius: 6px; font-weight: 700; font-size: .9rem; }
+
+.bk__side { background: #26262C; border-left: 1px solid var(--line); display: flex; flex-direction: column; position: sticky; top: 64px; height: calc(100vh - 64px); }
+.bk-ev { padding: 18px 20px; border-bottom: 1px solid var(--line); }
+.bk-ev h2 { margin: 0 0 12px; font-size: 1.05rem; line-height: 1.35; }
+.bk-ev p { display: flex; gap: 10px; align-items: flex-start; margin: 0 0 8px; font-size: .9rem; }
+.bk-ev .icon { width: 18px; height: 18px; flex: none; margin-top: 1px; }
+.bk-pin { color: var(--accent); }
+.bk-prices { padding: 16px 20px; overflow-y: auto; flex: 1; }
+.bk-prices h2 { margin: 0 0 10px; font-size: .95rem; }
+.bk-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.bk-price {
+  width: 100%; display: grid; grid-template-columns: 30px 1fr auto; align-items: center; gap: 10px;
+  padding: 8px; border: 1.5px solid transparent; border-radius: 8px; background: none; color: var(--ink);
+  font: inherit; text-align: left; cursor: pointer;
+}
+.bk-price:hover:not(:disabled) { background: rgba(255,255,255,.05); }
+.bk-price.is-on { border-color: var(--accent); background: rgba(43,208,127,.08); }
+.bk-price:disabled { opacity: .45; cursor: not-allowed; }
+.bk-price i { width: 30px; height: 18px; border-radius: 4px; }
+.bk-price span { font-size: .9rem; font-weight: 600; }
+.bk-price small { display: block; color: var(--muted); font-weight: 400; font-size: .78rem; }
+.bk-price b { color: var(--accent); font-size: .9rem; white-space: nowrap; }
+
+.bk-pick { padding: 14px 20px; border-top: 1px solid var(--line); }
+.bk-pick[hidden] { display: none; }
+.bk-pick__row { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.bk-pick__row small { display: block; color: var(--muted); font-size: .85rem; }
+.bk-qty { display: flex; align-items: center; border: 1.5px solid var(--line); border-radius: 8px; overflow: hidden; }
+.bk-qty button { width: 38px; height: 38px; border: 0; background: var(--surface-2); color: var(--ink); font-size: 1.2rem; cursor: pointer; }
+.bk-qty button:disabled { color: #55555E; cursor: not-allowed; }
+.bk-qty output { width: 40px; text-align: center; font-weight: 800; }
+.bk-note { margin: 10px 0 0; font-size: .8rem; color: var(--muted); }
+.bk__foot { padding: 14px 20px 18px; border-top: 1px solid var(--line); }
+.bk-total { display: flex; justify-content: space-between; align-items: baseline; margin: 0 0 10px; }
+.bk-total[hidden] { display: none; }
+.bk-total strong { color: var(--accent); font-size: 1.35rem; }
+.bk__foot .btn[disabled] { background: #E4E4E7; border-color: #E4E4E7; color: #71717A; opacity: 1; }
+
+@media (max-width: 900px) {
+  .bk { grid-template-columns: 1fr; }
+  .bk__side { position: sticky; bottom: 0; top: auto; height: auto; max-height: 70vh; border-left: 0; border-top: 1px solid var(--line); }
+  .bk-ev, .bk-prices { display: none; }
+  .bk__map { padding: 14px 12px 24px; }
+  .bk-row { flex-wrap: wrap; }
+}
+
+/* ---------- Trang thanh toan (pay.html) ---------- */
+.pay-steps { list-style: none; display: flex; gap: 10px; margin: 0 0 22px; padding: 0; counter-reset: st; }
+.pay-steps li { flex: 1; display: flex; align-items: center; gap: 10px; color: var(--muted); font-weight: 700; font-size: .92rem; counter-increment: st; }
+.pay-steps li::before { content: counter(st); width: 28px; height: 28px; flex: none; border-radius: 50%; display: grid; place-items: center; border: 2px solid var(--line); font-size: .85rem; }
+.pay-steps li::after { content: ""; flex: 1; height: 2px; background: var(--line); }
+.pay-steps li:last-child::after { display: none; }
+.pay-steps .is-done { color: var(--ink); }
+.pay-steps .is-done::before { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.pay-steps .is-on { color: var(--ink); }
+.pay-steps .is-on::before { border-color: var(--accent); color: var(--accent); }
+
+.pay-hold { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px 20px; margin-bottom: 18px; padding: 14px 20px; border-radius: var(--radius); background: #3A2F15; border: 1px solid #6B5420; color: #FFD58A; font-weight: 600; }
+.pay-hold .countdown { font-size: 2.2rem; margin: 0; color: #FFD58A; }
+.pay-hold .countdown--urgent { color: var(--bad); }
+.pay-h { margin: 0 0 14px; font-size: 1.1rem; }
+.pay-grid > div > .panel + .panel { margin-top: 18px; }
+.pay-who { display: grid; grid-template-columns: auto 1fr; gap: 8px 18px; margin: 0; }
+.pay-who dt { color: var(--muted); }
+.pay-who dd { margin: 0; font-weight: 600; }
+.pay-small { font-size: .86rem; margin: 14px 0 0; }
+.pay-small a { color: var(--accent); }
+.pay-methods { display: grid; gap: 10px; }
+.pay-methods .pay-h { margin-bottom: 4px; }
+.pay-method { display: flex; align-items: center; gap: 12px; padding: 13px 14px; border: 1.5px solid var(--line); border-radius: 10px; cursor: pointer; font-weight: 600; }
+.pay-method:has(input:checked) { border-color: var(--accent); background: rgba(43,208,127,.08); }
+.pay-method input { accent-color: var(--accent); width: 18px; height: 18px; }
+.pay-method small { display: block; color: var(--muted); font-weight: 400; font-size: .82rem; }
+.pay-logo { width: 52px; height: 30px; border-radius: 6px; display: grid; place-items: center; color: #FFF; font-size: .7rem; font-weight: 800; flex: none; }
+.pay-sum { position: sticky; top: 90px; }
+.pay-sum h2 { margin: 0 0 10px; font-size: 1.1rem; }
+.pay-sum__ev { font-weight: 800; margin: 0 0 14px; }
+.pay-sum__total { display: flex; justify-content: space-between; align-items: baseline; margin: 16px 0; padding-top: 14px; border-top: 1px solid var(--line); }
+.pay-sum__total strong { color: var(--accent); font-size: 1.5rem; }
+.pay-cancel { margin-top: 10px; }
+.pay-ok { text-align: center; margin: 10px 0 22px; }
+.pay-ok__check { width: 68px; height: 68px; margin: 0 auto 12px; border-radius: 50%; background: var(--accent); color: var(--accent-ink); display: grid; place-items: center; }
+.pay-ok__check svg { width: 34px; height: 34px; }
+.pay-ok h1 { margin: 0 0 6px; font-size: 1.8rem; }
+.pay-actions { justify-content: center; }
+.pay-closed { max-width: 560px; margin: 10px auto; text-align: center; }
+.pay-closed h1 { font-size: 1.6rem; }
+.pay-closed .actions { justify-content: center; }
+
+/* ---------- Trang quan tri (admin.html) ---------- */
+.adm-tag { font-size: .8rem; font-weight: 700; letter-spacing: 0; padding: 3px 9px; border-radius: 6px; background: rgba(0,0,0,.22); vertical-align: 4px; margin-left: 6px; }
+.adm { display: grid; grid-template-columns: 250px minmax(0, 1fr); min-height: calc(100vh - 64px); }
+.adm__side { background: #0F0F13; border-right: 1px solid var(--line); padding: 18px 12px; position: sticky; top: 64px; align-self: start; height: calc(100vh - 64px); overflow-y: auto; }
+.adm__group + .adm__group { margin-top: 18px; }
+.adm__label { margin: 0 10px 6px; font-size: .8rem; font-weight: 600; color: var(--muted); }
+.adm__link { display: flex; align-items: center; gap: 12px; padding: 10px; border-radius: 10px; color: var(--ink); text-decoration: none; font-weight: 600; font-size: .95rem; }
+.adm__link .icon { width: 20px; height: 20px; color: var(--muted); }
+.adm__link:hover { background: var(--surface); }
+.adm__link[aria-current="page"] { background: var(--surface); color: var(--accent); }
+.adm__link[aria-current="page"] .icon { color: var(--accent); }
+.adm__main { padding: 26px 30px 60px; min-width: 0; }
+.adm__title { font-size: 1.7rem; margin: 0 0 20px; }
+
+.adm-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 20px; }
+.adm-stat { background: var(--surface); border-radius: var(--radius); padding: 18px 20px; border-top: 3px solid var(--accent); }
+.adm-stat__label { margin: 0; color: var(--muted); font-size: .9rem; font-weight: 600; }
+.adm-stat__value { margin: 6px 0 2px; font-size: 1.9rem; font-weight: 800; letter-spacing: -0.02em; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.adm-stat__note { margin: 0; color: var(--muted); font-size: .85rem; }
+
+.adm-cols { display: grid; grid-template-columns: minmax(0, 2fr) minmax(260px, 1fr); gap: 20px; align-items: start; }
+.adm-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; margin-bottom: 12px; }
+.adm-head h2 { margin: 0; font-size: 1.1rem; }
+.adm-head a { color: var(--accent); font-weight: 600; font-size: .9rem; text-decoration: none; }
+.adm-table { background: transparent; border-radius: 0; }
+.adm-table table { min-width: 560px; }
+.adm-table td { vertical-align: middle; }
+.adm-table td a { text-decoration: none; font-weight: 600; }
+.adm-table td a:hover { color: var(--accent); }
+.adm-table .bar { width: 120px; margin: 0 0 2px; }
+.adm-sub { display: block; font-size: .82rem; }
+
+.adm-next { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+.adm-next li { display: flex; gap: 14px; align-items: center; }
+.adm-date { flex: none; width: 52px; text-align: center; background: var(--surface-2); border-radius: 10px; padding: 6px 0; font-size: .78rem; color: var(--muted); line-height: 1.2; }
+.adm-date b { display: block; font-size: 1.3rem; color: var(--ink); }
+
+.adm-todo { max-width: 620px; }
+.adm-todo .icon { width: 36px; height: 36px; color: var(--accent); }
+.adm-todo h2 { margin: 10px 0 8px; }
+.adm-todo p { margin: 0 0 8px; }
+.adm-todo ul { margin: 0 0 14px; padding-left: 20px; display: grid; gap: 4px; }
+
+/* Thanh cong cu + khung nhap truot ben phai */
+.adm-bar { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin-bottom: 16px; }
+.adm-search { flex: 1 1 260px; max-width: 380px; padding: 10px 14px; border: 1.5px solid var(--line); border-radius: 10px; background: var(--surface); color: var(--ink); font: inherit; }
+.adm-search:focus { outline: none; border-color: var(--accent); }
+.adm-bar__new { margin-left: auto; }
+.adm-actions { white-space: nowrap; text-align: right; }
+.adm-actions .btn + .btn { margin-left: 6px; }
+.adm-table tbody tr:hover { background: rgba(255,255,255,.025); }
+
+.adm-drawer { position: fixed; inset: 0; z-index: 60; }
+.adm-drawer[hidden] { display: none; }
+.adm-drawer__bg { position: absolute; inset: 0; background: rgba(10,10,14,.6); }
+.adm-drawer__box {
+  position: absolute; top: 0; right: 0; bottom: 0; width: min(480px, 100%);
+  background: var(--surface); border-left: 1px solid var(--line);
+  display: flex; flex-direction: column; animation: adm-in .2s ease-out;
+}
+@keyframes adm-in { from { transform: translateX(40px); opacity: 0; } to { transform: none; opacity: 1; } }
+.adm-drawer__head { display: flex; justify-content: space-between; align-items: center; padding: 18px 22px; border-bottom: 1px solid var(--line); }
+.adm-drawer__head h2 { margin: 0; font-size: 1.2rem; }
+.adm-x { width: 34px; height: 34px; border: 0; border-radius: 8px; background: var(--surface-2); color: var(--ink); font-size: 1.4rem; line-height: 1; cursor: pointer; }
+.adm-drawer__body { padding: 20px 22px; overflow-y: auto; flex: 1; }
+.adm-drawer__foot { display: flex; justify-content: flex-end; gap: 10px; padding: 14px 22px; border-top: 1px solid var(--line); }
+.adm-drawer .field input[aria-invalid="true"], .adm-drawer .field select[aria-invalid="true"] { border-color: var(--bad); }
+.adm-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 0 12px; }
+.adm-hint { font-size: .88rem; }
+.adm-hint a { color: var(--accent); }
+.adm-select { padding: 10px 14px; border: 1.5px solid var(--line); border-radius: 10px; background: var(--surface); color: var(--ink); font: inherit; min-width: 200px; }
+.adm-select:focus { outline: none; border-color: var(--accent); }
+.adm-bar .btn--ghost + .btn { margin-left: 0; }
+.adm-bar #sOne { margin-left: auto; }
+.adm-danger { color: var(--bad); border-color: var(--bad); margin-right: auto; }
+.adm-drawer select { display: block; width: 100%; margin-top: 6px; padding: 11px 13px; border: 1.5px solid var(--line); border-radius: 10px; background: var(--surface-2); color: var(--ink); font: inherit; font-weight: 400; }
+.adm-drawer select[aria-invalid="true"] { border-color: var(--bad); }
+.adm-hint { display: block; margin-top: 4px; font-weight: 400; }
+.msg code { font-size: .9em; }
+
+/* So do ghe */
+.adm-seatwrap { overflow-x: auto; padding: 4px 0 8px; }
+.adm-seatmap { display: grid; gap: 6px; width: max-content; }
+.adm-seatrow { display: flex; align-items: center; gap: 5px; }
+.adm-rowlabel { width: 28px; color: var(--muted); font-weight: 700; font-size: .85rem; }
+.adm-seat { width: 30px; height: 28px; border: 0; border-radius: 7px 7px 4px 4px; background: var(--surface-2); color: var(--ink); font: inherit; font-size: .72rem; font-weight: 700; cursor: pointer; display: inline-block; }
+.adm-seat:hover { outline: 2px solid var(--accent); }
+.adm-seat.is-used { background: #5B3B7A; }
+.adm-legend { display: flex; flex-wrap: wrap; gap: 8px 20px; margin-top: 14px; font-size: .88rem; color: var(--muted); align-items: center; }
+.adm-legend span { display: inline-flex; align-items: center; gap: 8px; }
+.adm-legend i { width: 18px; height: 16px; cursor: default; }
+.adm-legend i:hover { outline: 0; }
+.adm-select--wide { min-width: 320px; max-width: 100%; }
+/* Thanh trang thai ve: da ban / dang giu / con trong */
+.adm-stack { display: flex; width: 180px; height: 8px; border-radius: 999px; overflow: hidden; background: var(--surface-2); margin-bottom: 4px; }
+.adm-stack i { display: block; height: 100%; }
+.s-sold { background: var(--accent); }
+.s-res { background: var(--warn); }
+.s-free { background: #4A4A55; }
+.adm-dot { display: inline-block; width: 12px; height: 12px; border-radius: 3px; }
+.adm-count { margin: 12px 0 0; font-size: .88rem; }
+.adm-qr { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+.adm-qr .qr { padding: 10px; }
+.adm-qr .ticket__code { max-width: 100%; }
+.adm-dl { align-self: stretch; display: grid; grid-template-columns: auto 1fr; gap: 8px 16px; margin: 10px 0 0; padding-top: 14px; border-top: 1px solid var(--line); }
+.adm-dl dt { color: var(--muted); }
+.adm-dl dd { margin: 0; font-weight: 600; }
+.adm-drawer__box--wide { width: min(620px, 100%); }
+.adm-dl--top { margin: 0 0 6px; padding-top: 0; border-top: 0; }
+.adm-h3 { margin: 22px 0 10px; font-size: 1rem; }
+.adm-who { display: flex; align-items: center; gap: 14px; margin-bottom: 18px; }
+.adm-who strong { font-size: 1.1rem; }
+.adm-olist { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.adm-olist button { width: 100%; display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface-2); color: var(--ink); font: inherit; text-align: left; cursor: pointer; }
+.adm-olist button:hover { border-color: var(--accent); }
+@media (max-width: 520px) { .adm-2col { grid-template-columns: 1fr; } .adm-bar__new { margin-left: 0; } }
+
+@media (max-width: 1000px) {
+  .adm-stats { grid-template-columns: repeat(2, 1fr); }
+  .adm-cols { grid-template-columns: 1fr; }
+}
+@media (max-width: 760px) {
+  .adm { grid-template-columns: 1fr; }
+  .adm__side { position: static; height: auto; display: flex; gap: 4px; overflow-x: auto; padding: 10px; }
+  .adm__group { display: flex; gap: 4px; margin: 0 !important; }
+  .adm__label { display: none; }
+  .adm__link { white-space: nowrap; }
+  .adm__main { padding: 20px 16px 48px; }
+}
+
 /* ---------- Chan trang ---------- */
 .footer { border-top: 1px solid var(--line); color: var(--muted); }
 .footer .wrap { padding-top: 22px; padding-bottom: 32px; font-size: .9rem; }
 
 @media (max-width: 720px) {
-  .banners { grid-template-columns: 88%; grid-auto-flow: column; grid-auto-columns: 88%; overflow-x: auto; scroll-snap-type: x mandatory; }
-  .banner { scroll-snap-align: start; aspect-ratio: auto; min-height: 280px; }
+  .banner { flex-basis: 88%; aspect-ratio: auto; min-height: 260px; }
+  .hero__nav { display: none; }
   .rank__no { font-size: 5rem; }
   .pay-grid { grid-template-columns: 1fr; }
   .order { grid-template-columns: 1fr; }

@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Quản trị | MyTickets</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;600;700;800&display=swap">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body class="adm-body">
+<div class="topbar-wrap">
+  <header class="topbar">
+    <a class="brand" href="admin.html">mytickets <span class="adm-tag">Quản trị</span></a>
+    <nav id="nav" class="nav" aria-label="Điều hướng chính"></nav>
+  </header>
+</div>
+
+<div class="adm">
+  <aside class="adm__side" id="side" aria-label="Menu quản trị"></aside>
+  <main class="adm__main">
+    <h1 class="adm__title" id="title">Tổng quan</h1>
+    <p id="msg" class="msg" hidden></p>
+    <div id="view"><p class="empty">Đang tải...</p></div>
+  </main>
+</div>
+
+<script src="js/api.js"></script>
+<script src="js/auth.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="js/admin.js"></script>
+</body>
+</html>

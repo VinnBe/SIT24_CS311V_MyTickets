@@ -33,8 +33,18 @@
     '<div class="as__pills" id="pills"></div>' +
     '<div class="as__tabs" role="tablist" id="when"></div><div id="list" aria-live="polite"></div>';
 
+  // backend.py: GET /api/my-orders doc view v_customer_orders
+  // (order_id, event_name, zone_name, ticket_quantity, total, order_status, create_at, method, pay_at)
   let orders;
-  try { orders = await API.get("/my-tickets"); }
+  try {
+    orders = await API.get("/my-orders");
+    // View khong co gio dien ra; lay tu danh sach su kien de chia "Sap dien ra" / "Da ket thuc"
+    const events = await API.get("/events").catch(() => []);
+    orders.forEach((o) => {
+      const e = events.find((x) => x.event_name === o.event_name);
+      if (e) { o.start_time = e.start_time; o.end_time = e.end_time; }
+    });
+  }
   catch (err) { document.getElementById("list").innerHTML = '<p class="msg msg--error">' + esc(err.message) + "</p>"; return; }
 
   const STATUS = [["", "Tất cả"], ["PAID", "Thành công"], ["PENDING", "Đang xử lý"], ["FAILED", "Đã hủy"]];
@@ -53,9 +63,10 @@
     if (!rows.length) { list.innerHTML = AccountShell.empty("Bạn chưa có vé nào", ["Mua vé ngay", "index.html"]); return; }
     list.innerHTML = '<div class="ord">' + rows.map((o) =>
       '<article class="ord__card"><div class="ord__top"><p class="ord__name">' + esc(o.event_name) + "</p>" + pill(ORDER_STATUS, o.order_status) + "</div>" +
-      '<p class="ord__meta">' + esc(o.zone_name) + " · " + o.ticket_quantity + " vé" + (o.start_time ? " · " + fmtDt(o.start_time) : "") + "</p>" +
+      '<p class="ord__meta">Đơn #' + o.order_id + " · " + esc(o.zone_name || "") + " · " + o.ticket_quantity + " vé" + (o.start_time ? " · " + fmtDt(o.start_time) : "") + "</p>" +
       '<div class="ord__foot"><span class="ord__total">' + money(o.total) + "</span>" +
-      (o.order_status === "PAID" ? '<button type="button" class="btn btn--small" data-order="' + o.order_id + '">Xem vé</button>' : "") +
+      (o.order_status === "PAID" ? '<button type="button" class="btn btn--small" data-order="' + o.order_id + '">Xem vé</button>'
+        : o.order_status === "PENDING" ? '<a class="btn btn--small" href="pay.html?order=' + o.order_id + '">Thanh toán tiếp</a>' : "") +
       '</div><div class="ord__tickets" id="t' + o.order_id + '" hidden></div></article>').join("") + "</div>";
   }
   draw();

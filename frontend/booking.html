@@ -1,0 +1,366 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Chọn vé | MyTickets</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;600;700;800&display=swap">
+<link rel="stylesheet" href="css/style.css">
+<!-- Giao dien rieng cua trang nay: de trong file de khong phu thuoc ban style.css -->
+<style>
+/* ---------- Trang chon ve (booking.html), bo cuc kieu ticketbox ---------- */
+.bk-body { background: #000; }
+.bk { display: grid; grid-template-columns: minmax(0, 1fr) 380px; min-height: calc(100vh - 64px); }
+.bk__map { padding: 18px 24px 40px; min-width: 0; }
+.bk__back { display: inline-flex; align-items: center; gap: 8px; color: var(--accent); font-weight: 700; text-decoration: none; }
+.bk__back .icon { width: 20px; height: 20px; }
+.bk__head { text-align: center; margin: 4px 0 22px; }
+.bk__head h1 { font-size: 1.15rem; color: var(--accent); margin: 0; letter-spacing: 0; }
+.bk__head p { margin: 2px 0 0; color: var(--ink); font-size: .95rem; }
+
+.bk-map { max-width: 860px; margin: 0 auto; display: flex; flex-direction: column; gap: 10px; }
+.bk-stage {
+  align-self: center; width: min(420px, 70%); padding: 18px 0; margin-bottom: 14px;
+  background: #C9C9D1; color: #26262C; text-align: center;
+  font-size: clamp(1.4rem, 3.5vw, 2.4rem); font-weight: 800; letter-spacing: .02em;
+  border-radius: 6px 6px 40% 40% / 6px 6px 30px 30px;
+}
+.bk-row { display: flex; gap: 10px; }
+.bk-zone {
+  flex: 1 1 0; min-width: 84px; min-height: 76px; padding: 10px 8px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+  background: var(--c); color: #111; border: 3px solid transparent; border-radius: 6px;
+  font: inherit; cursor: pointer; transition: transform .12s, filter .12s;
+}
+.bk-zone strong { font-size: clamp(.95rem, 1.8vw, 1.3rem); font-weight: 800; line-height: 1.1; }
+.bk-zone small { font-size: .78rem; font-weight: 700; }
+.bk-zone:hover:not(:disabled) { filter: brightness(1.12); }
+.bk-zone.is-on { border-color: #FFF; box-shadow: 0 0 0 3px var(--accent); transform: scale(1.02); }
+.bk-zone.is-out { background: #3A3A42; color: #8A8A93; cursor: not-allowed; }
+.bk-foh { align-self: center; margin-top: 10px; padding: 8px 18px; background: #3A3A42; color: #D4D4D8; border-radius: 6px; font-weight: 700; font-size: .9rem; }
+
+.bk__side { background: #26262C; border-left: 1px solid var(--line); display: flex; flex-direction: column; position: sticky; top: 64px; height: calc(100vh - 64px); }
+.bk-ev { padding: 18px 20px; border-bottom: 1px solid var(--line); }
+.bk-ev h2 { margin: 0 0 12px; font-size: 1.05rem; line-height: 1.35; }
+.bk-ev p { display: flex; gap: 10px; align-items: flex-start; margin: 0 0 8px; font-size: .9rem; }
+.bk-ev .icon { width: 18px; height: 18px; flex: none; margin-top: 1px; }
+.bk-pin { color: var(--accent); }
+.bk-prices { padding: 16px 20px; overflow-y: auto; flex: 1; }
+.bk-prices h2 { margin: 0 0 10px; font-size: .95rem; }
+.bk-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.bk-price {
+  width: 100%; display: grid; grid-template-columns: 30px 1fr auto; align-items: center; gap: 10px;
+  padding: 8px; border: 1.5px solid transparent; border-radius: 8px; background: none; color: var(--ink);
+  font: inherit; text-align: left; cursor: pointer;
+}
+.bk-price:hover:not(:disabled) { background: rgba(255,255,255,.05); }
+.bk-price.is-on { border-color: var(--accent); background: rgba(43,208,127,.08); }
+.bk-price:disabled { opacity: .45; cursor: not-allowed; }
+.bk-price i { width: 30px; height: 18px; border-radius: 4px; }
+.bk-price span { font-size: .9rem; font-weight: 600; }
+.bk-price small { display: block; color: var(--muted); font-weight: 400; font-size: .78rem; }
+.bk-price b { color: var(--accent); font-size: .9rem; white-space: nowrap; }
+
+.bk-pick { padding: 14px 20px; border-top: 1px solid var(--line); }
+.bk-pick[hidden] { display: none; }
+.bk-pick__row { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.bk-pick__row small { display: block; color: var(--muted); font-size: .85rem; }
+.bk-qty { display: flex; align-items: center; border: 1.5px solid var(--line); border-radius: 8px; overflow: hidden; }
+.bk-qty button { width: 38px; height: 38px; border: 0; background: var(--surface-2); color: var(--ink); font-size: 1.2rem; cursor: pointer; }
+.bk-qty button:disabled { color: #55555E; cursor: not-allowed; }
+.bk-qty output { width: 40px; text-align: center; font-weight: 800; }
+.bk-note { margin: 10px 0 0; font-size: .8rem; color: var(--muted); }
+.bk__foot { padding: 14px 20px 18px; border-top: 1px solid var(--line); }
+.bk-total { display: flex; justify-content: space-between; align-items: baseline; margin: 0 0 10px; }
+.bk-total[hidden] { display: none; }
+.bk-total strong { color: var(--accent); font-size: 1.35rem; }
+.bk__foot .btn[disabled] { background: #E4E4E7; border-color: #E4E4E7; color: #71717A; opacity: 1; }
+
+@media (max-width: 900px) {
+  .bk { grid-template-columns: 1fr; }
+  .bk__side { position: sticky; bottom: 0; top: auto; height: auto; max-height: 70vh; border-left: 0; border-top: 1px solid var(--line); }
+  .bk-ev, .bk-prices { display: none; }
+  .bk__map { padding: 14px 12px 24px; }
+  .bk-row { flex-wrap: wrap; }
+}
+
+/* Nut phong to / thu nho so do (ben trai, giong ticketbox) */
+.bk__map { position: relative; }
+.bk-zoom { position: absolute; left: 20px; top: 64px; z-index: 2; display: grid; gap: 8px; }
+.bk-zoom button { width: 36px; height: 36px; padding: 0; border: 0; background: none; color: var(--accent); cursor: pointer; border-radius: 50%; }
+.bk-zoom button:hover { background: rgba(43,208,127,.12); }
+.bk-zoom svg { width: 34px; height: 34px; }
+.bk-canvas { overflow: auto; padding: 4px 4px 20px 56px; }
+.bk-map { --zoom: 1; transform: scale(var(--zoom)); transform-origin: top center; transition: transform .15s; }
+.bk-link { background: none; border: 0; padding: 0; color: var(--accent); font: inherit; font-weight: 600; font-size: .88rem; cursor: pointer; }
+.bk-link:hover { text-decoration: underline; }
+
+/* Hop noi chon so luong (giong anh mau) */
+.bk-modal { position: fixed; inset: 0; z-index: 80; display: grid; place-items: center; padding: 16px; }
+.bk-modal[hidden] { display: none; }
+.bk-modal__bg { position: absolute; inset: 0; background: rgba(0,0,0,.55); }
+.bk-modal__box {
+  position: relative; width: min(400px, 100%); background: #FFFFFF; color: #27272A;
+  border-radius: 12px; padding: 22px 24px 20px; box-shadow: 0 24px 60px rgba(0,0,0,.5);
+  animation: am-in .18s ease-out;
+}
+.bk-modal__box h2 { margin: 0; text-align: center; font-size: 1.1rem; color: #18181B; }
+.bk-modal__x { position: absolute; top: 12px; right: 12px; width: 32px; height: 32px; border: 0; background: none; color: #27272A; cursor: pointer; border-radius: 8px; }
+.bk-modal__x:hover { background: #F4F4F5; }
+.bk-modal__x svg { width: 22px; height: 22px; }
+.bk-modal__warn { margin: 8px 0 16px; text-align: center; color: #E8710A; font-size: .92rem; }
+.bk-modal__row { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 14px; }
+.bk-modal__row strong { color: #12A05C; font-size: 1rem; }
+.bk-step { display: flex; align-items: center; gap: 6px; }
+.bk-step button { width: 36px; height: 32px; border: 1.5px solid #12A05C; border-radius: 6px; background: #FFF; color: #12A05C; font-size: 1.1rem; cursor: pointer; }
+.bk-step button:disabled { border-color: #E4E4E7; background: #F4F4F5; color: #A1A1AA; cursor: not-allowed; }
+.bk-step output { width: 48px; height: 32px; display: grid; place-items: center; border: 1.5px solid #D4D4D8; border-radius: 6px; font-weight: 700; }
+.bk-modal__info { display: flex; gap: 12px; padding: 12px 14px; border: 1.5px solid #A1A1AA; border-radius: 10px; background: #EEEEF1; font-size: .92rem; }
+.bk-modal__info svg { width: 22px; height: 22px; flex: none; color: #52525B; }
+.bk-modal__info p { margin: 0 0 4px; }
+.bk-modal__info p:last-child { margin: 0; }
+.bk-modal__other { display: block; margin: 16px auto 14px; background: none; border: 0; color: #12A05C; font: inherit; font-weight: 600; cursor: pointer; }
+.bk-modal__other:hover { text-decoration: underline; }
+.bk-modal__go {
+  width: 100%; height: 46px; display: flex; align-items: center; justify-content: center; gap: 6px;
+  border: 0; border-radius: 8px; background: #2BD07F; color: #FFF; font: inherit; font-weight: 700; cursor: pointer;
+}
+.bk-modal__go svg { width: 18px; height: 18px; }
+.bk-modal__go:disabled { background: #E4E4E7; color: #A1A1AA; cursor: not-allowed; }
+.bk-modal__x:focus-visible, .bk-step button:focus-visible, .bk-modal__other:focus-visible, .bk-modal__go:focus-visible { outline: 3px solid #12A05C; outline-offset: 2px; }
+
+
+@keyframes am-in { from { opacity: 0; transform: translateY(12px) scale(.98); } to { opacity: 1; transform: none; } }
+body.am-lock { overflow: hidden; }
+</style>
+</head>
+<body class="bk-body">
+<div class="topbar-wrap">
+  <header class="topbar">
+    <a class="brand" href="index.html">mytickets</a>
+    <nav id="nav" class="nav" aria-label="Điều hướng chính"></nav>
+  </header>
+</div>
+
+<div class="bk">
+  <section class="bk__map">
+    <a class="bk__back" id="back" href="index.html">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6"/></svg>Trở về
+    </a>
+    <div class="bk__head">
+      <h1>Chọn khu vực</h1>
+      <p>Bấm vào khu vực trên sơ đồ hoặc trong bảng giá để chọn vé</p>
+    </div>
+    <div class="bk-zoom" role="group" aria-label="Phóng to thu nhỏ sơ đồ">
+      <button type="button" data-zoom="1" aria-label="Phóng to"><svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 7v10M7 12h10"/></svg></button>
+      <button type="button" data-zoom="0" aria-label="Về kích thước ban đầu"><svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M16.5 9.5A5 5 0 1 0 17 13M17 6v3.5h-3.5"/></svg></button>
+      <button type="button" data-zoom="-1" aria-label="Thu nhỏ"><svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M7 12h10"/></svg></button>
+    </div>
+    <p id="msg" class="msg" hidden></p>
+    <div class="bk-canvas"><div id="map" class="bk-map" aria-label="Sơ đồ khu vực"><p class="empty">Đang tải sơ đồ...</p></div></div>
+  </section>
+
+  <aside class="bk__side">
+    <div class="bk-ev" id="ev"></div>
+    <div class="bk-prices">
+      <h2>Giá vé</h2>
+      <ul id="prices" class="bk-list"></ul>
+    </div>
+    <div class="bk-pick" id="pick" hidden></div>
+    <div class="bk__foot">
+      <p class="bk-total" id="total" hidden></p>
+      <button class="btn btn--block" id="go" disabled>Vui lòng chọn vé</button>
+    </div>
+  </aside>
+</div>
+
+<div class="bk-modal" id="modal" hidden>
+  <div class="bk-modal__bg" data-close></div>
+  <div class="bk-modal__box" role="dialog" aria-modal="true" aria-labelledby="mTitle">
+    <button type="button" class="bk-modal__x" data-close aria-label="Đóng">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+    </button>
+    <h2 id="mTitle"></h2>
+    <p class="bk-modal__warn">Lưu ý: Bạn chỉ có thể chọn vé trong 1 khu vực</p>
+    <div class="bk-modal__row">
+      <strong id="mName"></strong>
+      <div class="bk-step" role="group" aria-label="Số lượng vé">
+        <button type="button" id="mMinus" aria-label="Bớt 1 vé">−</button>
+        <output id="mQty" aria-live="polite">0</output>
+        <button type="button" id="mPlus" aria-label="Thêm 1 vé">+</button>
+      </div>
+    </div>
+    <div class="bk-modal__info">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 11v6M12 7.5v.5"/></svg>
+      <div id="mInfo"></div>
+    </div>
+    <button type="button" class="bk-modal__other" data-close>Chọn khu vực khác</button>
+    <button type="button" class="bk-modal__go" id="mGo" disabled>Vui lòng chọn vé
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M6 6l6 6-6 6M13 6l6 6-6 6"/></svg>
+    </button>
+  </div>
+</div>
+
+<script src="js/api.js"></script>
+<script src="js/auth.js"></script>
+<script>
+/* Chon khu (so do + hop noi chon so luong) -> POST /api/orders (sp_place_order giu cho) -> pay.html */
+const MAX_PER_ORDER = 2;   // khop ck_order_qty: ticket_quantity BETWEEN 1 AND 2
+// Mau theo bac gia: khu cang dat cang sang, giong bang mau cua ticketbox
+const TIER_COLORS = ["#8BE9FB", "#4FC6E3", "#2B8FB0", "#9B6BFF", "#8F4FD6", "#5E35A6", "#B020E0", "#D34FE8"];
+const $ = (id) => document.getElementById(id);
+let ev = null, zones = [], picked = null, qty = 0, draft = null, draftQty = 0, zoom = 1;
+
+function longDate(start, end) {
+  const s = parseDt(start), e = parseDt(end);
+  if (!s) return "";
+  const hm = (d) => pad(d.getHours()) + ":" + pad(d.getMinutes());
+  return hm(s) + (e && e.toDateString() === s.toDateString() ? " - " + hm(e) : "") +
+    ", " + s.getDate() + " Tháng " + (s.getMonth() + 1) + ", " + s.getFullYear();
+}
+
+// So do: san khau o tren, moi bac gia la 1 hang, khu dat nhat gan san khau nhat,
+// do rong moi khu ti le voi so ghe
+function drawMap() {
+  const tiers = [...new Set(zones.map((z) => z.price))].sort((a, b) => b - a);
+  $("map").innerHTML = '<div class="bk-stage">SÂN KHẤU</div>' +
+    tiers.map((p) => '<div class="bk-row">' + zones.filter((z) => z.price === p).map((z) => {
+      const out = z.available <= 0;
+      return '<button type="button" class="bk-zone' + (out ? " is-out" : "") + (picked && picked.zone_id === z.zone_id ? " is-on" : "") + '"' +
+        ' style="--c:' + z.color + ";flex-grow:" + Math.max(1, z.total_seats) + '"' +
+        ' data-zone="' + z.zone_id + '"' + (out ? " disabled" : "") +
+        ' aria-label="' + esc(z.zone_name) + ", " + money(z.price) + (out ? ", hết vé" : ", còn " + z.available + " vé") + '">' +
+        "<strong>" + esc(z.zone_name) + "</strong>" + (out ? "<small>Hết vé</small>" : "") + "</button>";
+    }).join("") + "</div>").join("") +
+    '<div class="bk-foh">Lối vào</div>';
+}
+
+function drawPrices() {
+  $("prices").innerHTML = zones.map((z) =>
+    '<li><button type="button" class="bk-price' + (picked && picked.zone_id === z.zone_id ? " is-on" : "") + '" data-zone="' + z.zone_id + '"' + (z.available <= 0 ? " disabled" : "") + ">" +
+      '<i style="background:' + z.color + '"></i>' +
+      "<span>" + esc(z.zone_name) + "<small>" + (z.available > 0 ? "Còn " + z.available + " vé" : "Hết vé") + "</small></span>" +
+      "<b>" + money(z.price) + "</b></button></li>").join("");
+}
+
+// Cot phai: ve da chon + nut tiep tuc
+function drawSide() {
+  const box = $("pick"), go = $("go"), total = $("total");
+  if (!picked || !qty) { box.hidden = true; total.hidden = true; go.disabled = true; go.textContent = "Vui lòng chọn vé"; return; }
+  box.hidden = false;
+  box.innerHTML = '<div class="bk-pick__row"><span><strong>' + esc(picked.zone_name) + "</strong><small>" + money(picked.price) + " × " + qty + "</small></span>" +
+    '<button type="button" class="bk-link" data-zone="' + picked.zone_id + '">Đổi số lượng</button></div>';
+  total.hidden = false;
+  total.innerHTML = "<span>Tạm tính " + qty + " vé</span><strong>" + money(qty * picked.price) + "</strong>";
+  go.disabled = false;
+  go.innerHTML = 'Tiếp tục <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M6 6l6 6-6 6M13 6l6 6-6 6"/></svg>';
+}
+
+// ---------- Hop noi chon so luong (bam vao 1 khu) ----------
+let lastFocus = null;
+function openModal(z) {
+  draft = z;
+  draftQty = picked && picked.zone_id === z.zone_id ? qty : 0;
+  $("mTitle").textContent = "Khu " + z.zone_name;
+  $("mName").textContent = z.zone_name;
+  $("mInfo").innerHTML =
+    "<p><strong>" + money(z.price) + "</strong> / vé</p>" +
+    "<p>Còn " + z.available + " / " + z.total_seats + " vé trong khu này.</p>" +
+    "<p>Ghế cụ thể được hệ thống tự xếp trong khu khi giữ chỗ. Bạn có 15 phút để thanh toán.</p>" +
+    "<p>Mỗi tài khoản được mua tối đa " + MAX_PER_ORDER + " vé cho một sự kiện.</p>";
+  paintModal();
+  lastFocus = document.activeElement;
+  $("modal").hidden = false;
+  document.body.classList.add("am-lock");
+  $("mPlus").focus();
+}
+function closeModal() {
+  $("modal").hidden = true;
+  document.body.classList.remove("am-lock");
+  if (lastFocus) lastFocus.focus();
+}
+function paintModal() {
+  const max = Math.min(MAX_PER_ORDER, draft.available);
+  $("mQty").textContent = draftQty;
+  $("mMinus").disabled = draftQty <= 0;
+  $("mPlus").disabled = draftQty >= max;
+  const go = $("mGo");
+  go.disabled = draftQty <= 0;
+  go.firstChild.textContent = draftQty > 0 ? "Tiếp tục · " + money(draftQty * draft.price) + " " : "Vui lòng chọn vé ";
+}
+
+// ---------- Phong to / thu nho so do ----------
+function setZoom(z) {
+  zoom = Math.min(1.8, Math.max(0.6, z));
+  $("map").style.setProperty("--zoom", zoom);
+}
+
+// ---------- Giu cho: tao order PENDING ----------
+async function placeOrder(btn) {
+  const label = btn.innerHTML;
+  btn.disabled = true; btn.textContent = "Đang giữ chỗ...";
+  try {
+    const order = await API.post("/orders", { event_id: ev.event_id, zone_id: picked.zone_id, quantity: qty });
+    location.href = "pay.html?order=" + order.order_id;
+  } catch (err) {
+    if (!$("modal").hidden) closeModal();
+    showMsg($("msg"), err.message);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    btn.disabled = false; btn.innerHTML = label;
+  }
+}
+
+(async () => {
+  const id = param("id");
+  $("back").href = id ? "event.html?id=" + encodeURIComponent(id) : "index.html";
+  const me = await initPage("customer");   // chua dang nhap -> sang trang dang nhap roi quay lai
+  if (!me) return;
+  if (!id) { $("map").innerHTML = ""; showMsg($("msg"), "Thiếu mã sự kiện. Hãy chọn sự kiện từ trang chủ."); return; }
+
+  let res;
+  try { res = await API.get("/events/" + encodeURIComponent(id)); }
+  catch (err) { $("map").innerHTML = ""; showMsg($("msg"), err.message); return; }
+  ev = res.event;
+  document.title = "Chọn vé: " + ev.event_name + " | MyTickets";
+
+  const tiers = [...new Set((res.zones || []).map((z) => z.price))].sort((a, b) => b - a);
+  zones = (res.zones || []).slice().sort((a, b) => b.price - a.price || a.zone_name.localeCompare(b.zone_name))
+    .map((z) => Object.assign({}, z, { color: TIER_COLORS[tiers.indexOf(z.price) % TIER_COLORS.length] }));
+
+  $("ev").innerHTML = "<h2>" + esc(ev.event_name) + "</h2>" +
+    '<p><svg class="icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 2h2v2h6V2h2v2h3a1 1 0 0 1 1 1v15a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1h3zm12 7H5v10h14z"/></svg>' + longDate(ev.start_time, ev.end_time) + "</p>" +
+    '<p><svg class="icon bk-pin" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a7 7 0 0 1 7 7c0 5-7 13-7 13S5 14 5 9a7 7 0 0 1 7-7zm0 4.5A2.5 2.5 0 1 0 12 11.5 2.5 2.5 0 0 0 12 6.5z"/></svg>' + esc(ev.venue_name) + "</p>";
+
+  if (ev.sale_status !== "ON_SALE") {
+    $("map").innerHTML = "";
+    showMsg($("msg"), ev.sale_status === "UPCOMING" ? "Sự kiện chưa mở bán. Vé mở bán lúc " + fmtDt(ev.sale_start) + "." : "Sự kiện đã diễn ra, không còn bán vé.", "info");
+    return;
+  }
+  if (!zones.length) { $("map").innerHTML = ""; showMsg($("msg"), "Sự kiện chưa có khu nào được mở bán.", "info"); return; }
+
+  drawMap(); drawPrices(); drawSide(); setZoom(1);
+
+  // Bam vao khu tren so do / bang gia -> mo hop chon so luong
+  document.querySelector(".bk").addEventListener("click", (e) => {
+    const b = e.target.closest("[data-zone]");
+    if (b && !b.disabled) openModal(zones.find((z) => String(z.zone_id) === b.dataset.zone));
+    const zb = e.target.closest("[data-zoom]");
+    if (zb) setZoom(zb.dataset.zoom === "0" ? 1 : zoom + Number(zb.dataset.zoom) * 0.2);
+  });
+
+  $("modal").addEventListener("click", (e) => { if (e.target.closest("[data-close]")) closeModal(); });
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !$("modal").hidden) closeModal(); });
+  $("mMinus").addEventListener("click", () => { draftQty--; paintModal(); });
+  $("mPlus").addEventListener("click", () => { draftQty++; paintModal(); });
+  $("mGo").addEventListener("click", () => {
+    picked = draft; qty = draftQty;          // chi 1 khu: chon khu moi thi thay khu cu
+    drawMap(); drawPrices(); drawSide();
+    placeOrder($("mGo"));
+  });
+  $("go").addEventListener("click", () => { if (picked && qty) placeOrder($("go")); });
+})();
+</script>
+</body>
+</html>

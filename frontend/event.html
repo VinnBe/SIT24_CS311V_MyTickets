@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Chi tiết sự kiện | MyTickets</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;600;700;800&display=swap">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="topbar-wrap">
+  <header class="topbar">
+    <a class="brand" href="index.html">mytickets</a>
+    <nav id="nav" class="nav" aria-label="Điều hướng chính"></nav>
+  </header>
+</div>
+
+<main class="wrap">
+  <p id="msg" class="msg" hidden></p>
+  <div id="page"><p class="empty">Đang tải sự kiện...</p></div>
+</main>
+
+<footer class="footer">
+  <div class="wrap">mytickets, đồ án môn Nhập môn cơ sở dữ liệu. Mỗi tài khoản mua tối đa 2 vé cho mỗi sự kiện.</div>
+</footer>
+
+<script src="js/api.js"></script>
+<script src="js/auth.js"></script>
+<script>
+/* Trang chi tiet su kien: the thong tin + poster, gioi thieu, thong tin ve tung khu */
+const POSTER_COLORS = [
+  ["#FF4D8D", "#6B2BD9"], ["#FFB547", "#E8466A"], ["#2EC4B6", "#3A47D5"],
+  ["#8E44FF", "#FF4D8D"], ["#FF7A45", "#7A1FA2"], ["#2BD07F", "#1F6FEB"],
+];
+const posterStyle = (id) => {
+  const [c1, c2] = POSTER_COLORS[id % POSTER_COLORS.length];
+  return "--c1:" + c1 + ";--c2:" + c2;
+};
+const ICON_CAL = '<svg class="icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 2h2v2h6V2h2v2h3a1 1 0 0 1 1 1v15a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1h3zm12 7H5v10h14z"/></svg>';
+const ICON_PIN = '<svg class="icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a7 7 0 0 1 7 7c0 5-7 13-7 13S5 14 5 9a7 7 0 0 1 7-7zm0 4.5A2.5 2.5 0 1 0 12 11.5 2.5 2.5 0 0 0 12 6.5z"/></svg>';
+
+// "2026-12-20 19:00:00" -> "19:00, 20 Tháng 12, 2026"; co end_time cung ngay thi "19:00 - 23:00, ..."
+function longDate(start, end) {
+  const s = parseDt(start), e = parseDt(end);
+  if (!s) return "";
+  const hm = (d) => pad(d.getHours()) + ":" + pad(d.getMinutes());
+  const day = s.getDate() + " Tháng " + (s.getMonth() + 1) + ", " + s.getFullYear();
+  const sameDay = e && e.toDateString() === s.toDateString();
+  return hm(s) + (sameDay ? " - " + hm(e) : "") + ", " + day;
+}
+function dayOf(s) {
+  const d = parseDt(s);
+  return d ? pad(d.getDate()) + "." + pad(d.getMonth() + 1) + "." + d.getFullYear() : "";
+}
+
+(async () => {
+  await initPage();
+  const id = param("id");
+  const box = document.getElementById("page");
+  if (!id) { box.innerHTML = ""; showMsg(document.getElementById("msg"), "Thiếu mã sự kiện. Hãy chọn sự kiện từ trang chủ."); return; }
+
+  let e;
+  try {
+    // API tra ve { event: {...}, zones: [...] }
+    const res = await API.get("/events/" + encodeURIComponent(id));
+    e = Object.assign({}, res.event, { zones: res.zones || [] });
+  }
+  catch (err) { box.innerHTML = ""; showMsg(document.getElementById("msg"), err.message); return; }
+
+  const zones = (e.zones || []).slice().sort((a, b) => b.price - a.price);
+  const left = zones.reduce((s, z) => s + z.available, 0);
+  const minPrice = zones.length ? Math.min(...zones.map((z) => z.price)) : null;
+  document.title = e.event_name + " | MyTickets";
+
+  // Nut mua ve theo trang thai ban
+  let cta;
+  if (e.sale_status === "STARTED") cta = '<button class="btn btn--block" disabled>Sự kiện đã diễn ra</button>';
+  else if (e.sale_status === "UPCOMING") cta = '<button class="btn btn--block" disabled>Mở bán lúc ' + fmtDt(e.sale_start) + "</button>";
+  else if (!zones.length || left === 0) cta = '<button class="btn btn--block" disabled>Đã hết vé</button>';
+  else cta = '<a class="btn btn--block" href="booking.html?id=' + e.event_id + '">Mua vé ngay</a>';
+
+  const addr = e.address ? '<span class="ev__addr">' + esc(e.address) + "</span>" : "";
+
+  box.innerHTML =
+    // ----- The tren cung: thong tin ben trai, poster ben phai -----
+    '<section class="ev">' +
+      '<div class="ev__info">' +
+        '<h1 class="ev__title">' + esc(e.event_name) + "</h1>" +
+        '<p class="ev__row">' + ICON_CAL + "<span>" + longDate(e.start_time, e.end_time) + "</span></p>" +
+        '<p class="ev__row">' + ICON_PIN + "<span>" + esc(e.venue_name) + addr + "</span></p>" +
+        '<div class="ev__buy">' +
+          (minPrice != null
+            ? '<a class="ev__from" href="#ve">Giá từ <strong>' + money(minPrice) + '</strong><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></a>'
+            : '<p class="ev__from">Chưa có giá vé</p>') +
+          cta +
+        "</div>" +
+      "</div>" +
+      '<div class="ev__poster banner" style="' + posterStyle(e.event_id) + '">' +
+        '<h2 class="banner__title">' + esc(e.event_name) + "</h2>" +
+        '<p class="banner__date">' + dayOf(e.start_time) + "</p>" +
+        '<p class="banner__venue">' + esc(e.venue_name) + "</p>" +
+      "</div>" +
+    "</section>" +
+
+    // ----- Gioi thieu -----
+    '<section class="ev-sec">' +
+      '<h2 class="ev-sec__head">Giới thiệu</h2>' +
+      '<div class="ev-sec__body">' +
+        "<p><strong>" + esc(e.event_name) + "</strong> diễn ra lúc " + longDate(e.start_time, e.end_time) +
+        " tại <strong>" + esc(e.venue_name) + "</strong>" + (e.address ? ", " + esc(e.address) : "") + ".</p>" +
+        (e.sale_start ? "<p>Vé được mở bán từ " + fmtDt(e.sale_start) + ".</p>" : "") +
+        "<p>Mỗi tài khoản được mua tối đa 2 vé cho sự kiện này. Vé đã thanh toán không đổi hoặc hoàn tiền.</p>" +
+      "</div>" +
+    "</section>" +
+
+    // ----- Thong tin ve tung khu -----
+    '<section class="ev-sec" id="ve">' +
+      '<h2 class="ev-sec__head">Thông tin vé</h2>' +
+      '<div class="ev-sec__body">' +
+        (zones.length
+          ? '<ul class="ev-tix">' + zones.map((z) =>
+              '<li><span><strong>' + esc(z.zone_name) + "</strong>" +
+              '<small class="' + (z.available ? "muted" : "ev-tix__out") + '">' +
+              (z.available ? "Còn " + z.available + "/" + z.total_seats + " vé" : "Hết vé") + "</small></span>" +
+              '<span class="ev-tix__price">' + money(z.price) + "</span></li>").join("") + "</ul>"
+          : '<p class="muted">Sự kiện chưa có khu vực bán vé.</p>') +
+      "</div>" +
+    "</section>";
+})();
+</script>
+</body>
+</html>

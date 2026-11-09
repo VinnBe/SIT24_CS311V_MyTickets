@@ -1,0 +1,391 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Đặt vé | MyTickets</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;600;700;800&display=swap">
+<link rel="stylesheet" href="css/style.css">
+<!-- Giao dien rieng cua trang nay: de trong file de khong phu thuoc ban style.css -->
+<style>
+/* ---------- Trang dat ve (pay.html) kieu ticketbox ---------- */
+.py-body { background: #000; }
+.py-hero { position: relative; overflow: hidden; background: radial-gradient(ellipse 50% 120% at 30% 50%, #2A1B5C, transparent 70%), radial-gradient(ellipse 40% 100% at 80% 40%, #3B1F55, transparent 70%), #121019; }
+.py-hero[hidden] { display: none; }
+.py-hero__in { max-width: 1200px; margin: 0 auto; padding: 24px 20px; display: flex; gap: 24px; align-items: center; justify-content: space-between; }
+.py-hero__info { flex: 1; min-width: 0; }
+.py-hero h1 { margin: 0 0 12px; padding-bottom: 12px; font-size: 1.5rem; letter-spacing: -0.01em; border-bottom: 2px solid rgba(255,255,255,.3); }
+.py-hero p { display: flex; gap: 10px; align-items: center; margin: 0 0 8px; font-weight: 700; }
+.py-hero .icon { width: 20px; height: 20px; }
+.py-clock { flex: none; padding: 18px 22px; border-radius: 12px; background: rgba(60,60,66,.85); border: 1px solid rgba(255,255,255,.25); text-align: center; }
+.py-clock[hidden] { display: none; }
+.py-clock p { display: block; margin: 0 0 10px; font-weight: 400; }
+.py-clock div { display: flex; align-items: center; justify-content: center; gap: 8px; }
+.py-clock span { width: 60px; height: 60px; display: grid; place-items: center; border-radius: 12px; background: #F04452; color: #FFF; font-size: 1.6rem; font-weight: 800; font-variant-numeric: tabular-nums; }
+.py-clock b { font-size: 1.5rem; }
+.py-main { padding-top: 28px; }
+.py-title { margin: 0 0 16px; color: var(--accent); font-size: 1.25rem; text-transform: uppercase; letter-spacing: .02em; }
+.py-grid { display: grid; grid-template-columns: minmax(0, 1fr) 350px; gap: 22px; align-items: start; }
+.py-form { background: #38383F; border-radius: 12px; overflow: hidden; padding-bottom: 8px; }
+.py-form__bar { height: 42px; background: #4A4A52; }
+.py-q { display: block; border: 0; margin: 0; padding: 18px 16px 6px; }
+.py-q legend, .py-q__t { display: block; float: none; padding: 0; margin-bottom: 12px; font-size: .95rem; }
+.py-q i { color: var(--bad); font-style: normal; }
+.py-radio, .py-method { display: flex; align-items: center; gap: 12px; margin: 0 0 10px; cursor: pointer; }
+.py-radio input { width: 20px; height: 20px; accent-color: var(--accent); }
+.py-q input[type=email], .py-q input[type=tel] { display: block; width: 100%; padding: 12px 12px; border: 1.5px solid transparent; border-radius: 6px; background: #26262C; color: var(--ink); font: inherit; }
+.py-q input:focus { outline: none; border-color: var(--accent); }
+.py-err { display: block; margin-top: 6px; color: var(--bad); font-size: .86rem; font-weight: 600; }
+.py-err:empty { display: none; }
+.py-note { margin: 10px 16px 8px; color: var(--muted); font-size: .85rem; }
+.py-dl { display: grid; grid-template-columns: auto 1fr; gap: 6px 18px; margin: 0 0 10px; }
+.py-dl dt { color: var(--muted); }
+.py-dl dd { margin: 0; font-weight: 600; }
+.py-method { padding: 12px 14px; border: 1.5px solid #55555E; border-radius: 10px; font-weight: 600; }
+.py-method:has(input:checked) { border-color: var(--accent); background: rgba(43,208,127,.1); }
+.py-method input { accent-color: var(--accent); width: 18px; height: 18px; }
+.py-method small { display: block; color: var(--muted); font-weight: 400; font-size: .82rem; }
+.py-logo { width: 54px; height: 30px; border-radius: 6px; display: grid; place-items: center; color: #FFF; font-size: .7rem; font-weight: 800; flex: none; }
+
+.py-card { position: sticky; top: 90px; background: #FFFFFF; color: #27272A; border-radius: 10px; padding: 16px; }
+.py-card__head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 14px; }
+.py-card__head h2 { margin: 0; font-size: 1rem; color: #18181B; }
+.py-link { background: none; border: 0; padding: 0; color: #2F6FEB; font: inherit; font-size: .92rem; cursor: pointer; }
+.py-form .py-link { color: var(--accent); font-weight: 600; }
+.py-link:hover { text-decoration: underline; }
+.py-card__cols, .py-card__line { display: flex; justify-content: space-between; gap: 12px; }
+.py-card__cols { margin-bottom: 10px; font-size: .95rem; }
+.py-card__line { font-size: .88rem; }
+.py-card__line span:last-child { text-align: right; }
+.py-card__line small { display: block; margin-top: 4px; font-size: .88rem; }
+.py-card__seats { margin: 8px 0 0; font-size: .82rem; color: #71717A; }
+.py-card__sum { display: flex; justify-content: space-between; align-items: baseline; margin-top: 12px; padding-top: 12px; border-top: 1.5px dashed #D4D4D8; }
+.py-card__sum strong { color: #12A05C; font-size: 1.05rem; }
+.py-card__hint { margin: 10px 0 10px; text-align: center; color: #A1A1AA; font-size: .82rem; min-height: 1em; }
+.py-go { width: 100%; height: 46px; display: flex; align-items: center; justify-content: center; gap: 6px; border: 0; border-radius: 6px; background: #2BD07F; color: #FFF; font: inherit; font-weight: 700; cursor: pointer; }
+.py-go:hover { background: #22B86E; }
+.py-go.is-off { opacity: .85; }
+.py-go:disabled { opacity: .6; cursor: progress; }
+.py-go .icon { width: 18px; height: 18px; }
+.py-go:focus-visible, .py-link:focus-visible { outline: 3px solid #12A05C; outline-offset: 2px; }
+
+@media (max-width: 860px) {
+  .py-hero__in { flex-direction: column; align-items: stretch; }
+  .py-grid { grid-template-columns: 1fr; }
+  .py-card { position: static; }
+  .bk-zoom { display: none; }
+  .bk-canvas { padding-left: 4px; }
+}
+
+/* ---------- Trang thanh toan (pay.html) ---------- */
+.pay-steps { list-style: none; display: flex; gap: 10px; margin: 0 0 22px; padding: 0; counter-reset: st; }
+.pay-steps li { flex: 1; display: flex; align-items: center; gap: 10px; color: var(--muted); font-weight: 700; font-size: .92rem; counter-increment: st; }
+.pay-steps li::before { content: counter(st); width: 28px; height: 28px; flex: none; border-radius: 50%; display: grid; place-items: center; border: 2px solid var(--line); font-size: .85rem; }
+.pay-steps li::after { content: ""; flex: 1; height: 2px; background: var(--line); }
+.pay-steps li:last-child::after { display: none; }
+.pay-steps .is-done { color: var(--ink); }
+.pay-steps .is-done::before { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.pay-steps .is-on { color: var(--ink); }
+.pay-steps .is-on::before { border-color: var(--accent); color: var(--accent); }
+
+.pay-hold { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px 20px; margin-bottom: 18px; padding: 14px 20px; border-radius: var(--radius); background: #3A2F15; border: 1px solid #6B5420; color: #FFD58A; font-weight: 600; }
+.pay-hold .countdown { font-size: 2.2rem; margin: 0; color: #FFD58A; }
+.pay-hold .countdown--urgent { color: var(--bad); }
+.pay-h { margin: 0 0 14px; font-size: 1.1rem; }
+.pay-grid > div > .panel + .panel { margin-top: 18px; }
+.pay-who { display: grid; grid-template-columns: auto 1fr; gap: 8px 18px; margin: 0; }
+.pay-who dt { color: var(--muted); }
+.pay-who dd { margin: 0; font-weight: 600; }
+.pay-small { font-size: .86rem; margin: 14px 0 0; }
+.pay-small a { color: var(--accent); }
+.pay-methods { display: grid; gap: 10px; }
+.pay-methods .pay-h { margin-bottom: 4px; }
+.pay-method { display: flex; align-items: center; gap: 12px; padding: 13px 14px; border: 1.5px solid var(--line); border-radius: 10px; cursor: pointer; font-weight: 600; }
+.pay-method:has(input:checked) { border-color: var(--accent); background: rgba(43,208,127,.08); }
+.pay-method input { accent-color: var(--accent); width: 18px; height: 18px; }
+.pay-method small { display: block; color: var(--muted); font-weight: 400; font-size: .82rem; }
+.pay-logo { width: 52px; height: 30px; border-radius: 6px; display: grid; place-items: center; color: #FFF; font-size: .7rem; font-weight: 800; flex: none; }
+.pay-sum { position: sticky; top: 90px; }
+.pay-sum h2 { margin: 0 0 10px; font-size: 1.1rem; }
+.pay-sum__ev { font-weight: 800; margin: 0 0 14px; }
+.pay-sum__total { display: flex; justify-content: space-between; align-items: baseline; margin: 16px 0; padding-top: 14px; border-top: 1px solid var(--line); }
+.pay-sum__total strong { color: var(--accent); font-size: 1.5rem; }
+.pay-cancel { margin-top: 10px; }
+.pay-ok { text-align: center; margin: 10px 0 22px; }
+.pay-ok__check { width: 68px; height: 68px; margin: 0 auto 12px; border-radius: 50%; background: var(--accent); color: var(--accent-ink); display: grid; place-items: center; }
+.pay-ok__check svg { width: 34px; height: 34px; }
+.pay-ok h1 { margin: 0 0 6px; font-size: 1.8rem; }
+.pay-actions { justify-content: center; }
+.pay-closed { max-width: 560px; margin: 10px auto; text-align: center; }
+.pay-closed h1 { font-size: 1.6rem; }
+.pay-closed .actions { justify-content: center; }
+
+
+@keyframes am-in { from { opacity: 0; transform: translateY(12px) scale(.98); } to { opacity: 1; transform: none; } }
+body.am-lock { overflow: hidden; }
+</style>
+</head>
+<body class="py-body">
+<div class="topbar-wrap">
+  <header class="topbar">
+    <a class="brand" href="index.html">mytickets</a>
+    <nav id="nav" class="nav" aria-label="Điều hướng chính"></nav>
+  </header>
+</div>
+
+<!-- Dai dau trang: thong tin su kien + dong ho giu cho -->
+<section class="py-hero" id="hero" hidden>
+  <div class="py-hero__in">
+    <div class="py-hero__info">
+      <h1 id="hName"></h1>
+      <p id="hTime"></p>
+      <p id="hVenue"></p>
+    </div>
+    <div class="py-clock" id="clockBox" role="timer" aria-live="off">
+      <p>Hoàn tất đặt vé trong</p>
+      <div><span id="mm">--</span><b>:</b><span id="ss">--</span></div>
+    </div>
+  </div>
+</section>
+
+<main class="wrap py-main">
+  <p id="msg" class="msg" hidden></p>
+  <div id="page"><p class="empty">Đang tải đơn hàng...</p></div>
+</main>
+
+<footer class="footer">
+  <div class="wrap">mytickets, đồ án môn Nhập môn cơ sở dữ liệu. Mỗi tài khoản mua tối đa 2 vé cho mỗi sự kiện.</div>
+</footer>
+
+<script src="js/api.js"></script>
+<script src="js/auth.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script>
+/* Buoc 1 Bang cau hoi -> Buoc 2 Thanh toan (sp_pay_order) -> Nhan ve QR.
+   Don het han / da huy -> bao va cho chon lai. */
+const METHODS = [
+  ["MOMO", "Ví MoMo", "Quét mã QR bằng ứng dụng MoMo", "#A50064"],
+  ["VNPAY", "VNPAY-QR", "Quét mã bằng ứng dụng ngân hàng", "#005BAA"],
+  ["CARD", "Thẻ ATM / Visa / Mastercard", "Thanh toán qua cổng thẻ", "#3F3F46"],
+];
+const ICON_CAL = '<svg class="icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 2h2v2h6V2h2v2h3a1 1 0 0 1 1 1v15a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1h3zm12 7H5v10h14z"/></svg>';
+const ICON_PIN = '<svg class="icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a7 7 0 0 1 7 7c0 5-7 13-7 13S5 14 5 9a7 7 0 0 1 7-7zm0 4.5A2.5 2.5 0 1 0 12 11.5 2.5 2.5 0 0 0 12 6.5z"/></svg>';
+const ICON_GO = '<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M6 6l6 6-6 6M13 6l6 6-6 6"/></svg>';
+const $ = (id) => document.getElementById(id);
+const orderId = param("order");
+let order = null, ev = null, profile = null, timer = null, left = 0;
+// Thong tin nguoi mua nam o bang customer(full_name, email, phone); sua o day se luu qua PUT /api/profile
+const answers = { agree: false, full_name: "", email: "", phone: "" };
+Object.assign(FRIENDLY, {
+  "Email da duoc su dung": "Email này đã được dùng cho tài khoản khác.",
+  "Email khong hop le": "Email chưa hợp lệ.",
+  "So dien thoai khong hop le": "Số điện thoại chưa hợp lệ.",
+  "Ho ten toi da 100 ky tu": "Họ tên tối đa 100 ký tự.",
+});
+
+function longDate(start, end) {
+  const s = parseDt(start), e = parseDt(end);
+  if (!s) return "";
+  const hm = (d) => pad(d.getHours()) + ":" + pad(d.getMinutes());
+  return hm(s) + (e && e.toDateString() === s.toDateString() ? " - " + hm(e) : "") +
+    ", " + s.getDate() + " Tháng " + (s.getMonth() + 1) + ", " + s.getFullYear();
+}
+
+// ---------- Dai dau trang + dong ho ----------
+function paintHero(showClock) {
+  $("hero").hidden = false;
+  $("hName").textContent = order.event_name;
+  $("hTime").innerHTML = ICON_CAL + "<span>" + (ev ? longDate(ev.start_time, ev.end_time) : "") + "</span>";
+  $("hVenue").innerHTML = ICON_PIN + "<span>" + esc(ev ? ev.venue_name : "") + "</span>";
+  $("clockBox").hidden = !showClock;
+}
+function startClock() {
+  clearInterval(timer);
+  left = Number(order.seconds_left) || 0;
+  const tick = () => {
+    $("mm").textContent = pad(Math.floor(Math.max(0, left) / 60));
+    $("ss").textContent = pad(Math.max(0, left) % 60);
+    if (left <= 0) { clearInterval(timer); load(); return; }   // het gio: tai lai trang thai
+    left--;
+  };
+  tick();
+  timer = setInterval(tick, 1000);
+}
+
+// ---------- The trang ben phai: thong tin dat ve ----------
+function ticketCard(step) {
+  // Gia moi ve = ticket.ticket_price (co the khac nhau neu admin doi gia giua chung)
+  const prices = [...new Set(order.tickets.map((t) => Number(t.ticket_price)))];
+  const unit = prices.length === 1 ? prices[0] : (order.ticket_quantity ? Number(order.ticket_amount) / order.ticket_quantity : 0);
+  return '<aside class="py-card">' +
+    '<div class="py-card__head"><h2>Thông tin đặt vé</h2><button type="button" class="py-link" id="redo">Chọn lại vé</button></div>' +
+    '<div class="py-card__cols"><b>Loại vé</b><b>Số lượng</b></div>' +
+    '<div class="py-card__line"><span>' + esc(order.zone_name) + "<small>" + money(unit) + "</small></span>" +
+      "<span>" + pad(order.ticket_quantity) + "<small>" + money(order.ticket_amount) + "</small></span></div>" +
+    (order.tickets.length ? '<p class="py-card__seats">Ghế: ' + order.tickets.map((t) => esc(t.seat_row) + t.seat_number).join(", ") + "</p>" : "") +
+    '<div class="py-card__sum"><b>Tạm tính ' + order.ticket_quantity + " ghế</b><strong>" + money(order.ticket_amount) + "</strong></div>" +
+    '<p class="py-card__hint" id="hint"></p>' +
+    '<button type="button" class="py-go" id="next">' + (step === 1 ? "Tiếp tục " : "Thanh toán " + money(order.ticket_amount) + " ") + ICON_GO + "</button>" +
+  "</aside>";
+}
+
+function bindRedo() {
+  $("redo").addEventListener("click", async () => {
+    if (!confirm("Chọn lại vé? Đơn đang giữ chỗ sẽ bị huỷ và ghế được trả lại.")) return;
+    clearInterval(timer);
+    try { await API.post("/orders/" + order.order_id + "/cancel"); } catch (e) { /* don co the da het han */ }
+    location.href = "booking.html?id=" + order.event_id;
+  });
+}
+
+// ---------- Buoc 1: bang cau hoi ----------
+// Cot trong database: customer.full_name VARCHAR(100), email VARCHAR(100) UNIQUE, phone VARCHAR(20)
+function stepQuestions() {
+  if (!answers.email && profile) {
+    answers.full_name = profile.full_name; answers.email = profile.email; answers.phone = profile.phone;
+  }
+  const field = (id, label, type, ac, max, val) =>
+    '<label class="py-q"><span class="py-q__t">' + label + ' <i>*</i></span>' +
+    '<input id="' + id + '" type="' + type + '" autocomplete="' + ac + '" maxlength="' + max + '" placeholder="Điền câu trả lời của bạn" value="' + esc(val) + '">' +
+    '<span class="py-err" id="' + id + 'Err"></span></label>';
+  $("page").innerHTML = '<h2 class="py-title">Bảng câu hỏi</h2>' +
+    '<div class="py-grid">' +
+      '<form class="py-form" id="qForm" novalidate>' +
+        '<div class="py-form__bar"></div>' +
+        '<fieldset class="py-q"><legend>Bạn đã đọc và hoàn toàn đồng ý “Điều khoản và điều kiện” của chương trình? <i>*</i></legend>' +
+          '<label class="py-radio"><input type="checkbox" name="agree" value="1"' + (answers.agree ? " checked" : "") + "><span>Tôi đã đọc và đồng ý</span></label></fieldset>" +
+        field("qName", "Họ và tên người nhận vé?", "text", "name", 100, answers.full_name) +
+        field("qEmail", "Email của bạn?", "email", "email", 100, answers.email) +
+        field("qPhone", "Số điện thoại của bạn?", "tel", "tel", 20, answers.phone) +
+        '<p class="py-note">Họ tên, email và số điện thoại được lưu vào tài khoản của bạn. Nếu bạn sửa ở đây, thông tin tài khoản cũng được cập nhật.</p>' +
+      "</form>" +
+      ticketCard(1) +
+    "</div>";
+  bindRedo();
+
+  const read = () => {
+    answers.agree = !!document.querySelector("input[name=agree]:checked");
+    answers.full_name = $("qName").value.trim();
+    answers.email = $("qEmail").value.trim();
+    answers.phone = $("qPhone").value.trim();
+  };
+  const complete = () => answers.agree && answers.full_name && answers.email && answers.phone;
+  const paint = () => {
+    read();
+    $("hint").textContent = complete() ? "" : "Vui lòng trả lời tất cả câu hỏi để tiếp tục";
+    $("next").classList.toggle("is-off", !complete());
+  };
+  $("qForm").addEventListener("input", paint);
+  $("qForm").addEventListener("change", paint);
+  paint();
+
+  $("next").addEventListener("click", async () => {
+    read();
+    if (!complete()) { $("hint").textContent = "Vui lòng trả lời tất cả câu hỏi để tiếp tục"; return; }
+    const errs = {
+      qName: answers.full_name.length > 100 ? "Họ tên tối đa 100 ký tự" : "",
+      qEmail: /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(answers.email) ? "" : "Email chưa đúng định dạng",
+      qPhone: /^\+?[0-9 ]{9,15}$/.test(answers.phone) ? "" : "Số điện thoại chưa hợp lệ",
+    };
+    Object.keys(errs).forEach((k) => { $(k + "Err").textContent = errs[k]; });
+    const bad = Object.keys(errs).find((k) => errs[k]);
+    if (bad) { $(bad).focus(); return; }
+
+    // Thong tin khac voi tai khoan -> ghi vao bang customer
+    const changed = !profile || profile.full_name !== answers.full_name || profile.email !== answers.email || profile.phone !== answers.phone;
+    if (changed) {
+      const b = $("next"); b.disabled = true; b.textContent = "Đang lưu thông tin...";
+      try {
+        profile = await API.request("PUT", "/profile", { full_name: answers.full_name, email: answers.email, phone: answers.phone });
+      } catch (err) {
+        b.disabled = false; b.innerHTML = "Tiếp tục " + ICON_GO;
+        const k = /email/i.test(err.message) ? "qEmail" : /điện thoại/i.test(err.message) ? "qPhone" : /tên/i.test(err.message) ? "qName" : null;
+        if (k) { $(k + "Err").textContent = err.message; $(k).focus(); } else showMsg($("msg"), err.message);
+        return;
+      }
+    }
+    stepPay();
+  });
+}
+
+// ---------- Buoc 2: chon phuong thuc va thanh toan ----------
+function stepPay() {
+  $("page").innerHTML = '<h2 class="py-title">Thanh toán</h2>' +
+    '<div class="py-grid">' +
+      '<div class="py-form">' +
+        '<div class="py-form__bar"></div>' +
+        '<div class="py-q"><span class="py-q__t">Thông tin nhận vé</span>' +
+          '<dl class="py-dl"><dt>Họ tên</dt><dd>' + esc(answers.full_name) + "</dd>" +
+          "<dt>Email</dt><dd>" + esc(answers.email) + "</dd><dt>Điện thoại</dt><dd>" + esc(answers.phone) + "</dd></dl>" +
+          '<button type="button" class="py-link" id="back1">Sửa câu trả lời</button></div>' +
+        '<fieldset class="py-q"><legend>Phương thức thanh toán <i>*</i></legend>' +
+          METHODS.map(([v, t, d, c], i) =>
+            '<label class="py-method"><input type="radio" name="method" value="' + v + '"' + (i === 0 ? " checked" : "") + ">" +
+            '<span class="py-logo" style="background:' + c + '">' + v + "</span>" +
+            "<span>" + t + "<small>" + d + "</small></span></label>").join("") +
+        "</fieldset>" +
+        '<p class="py-note">Đây là đồ án mô phỏng: bấm thanh toán sẽ ghi nhận thành công ngay, không trừ tiền thật.</p>' +
+      "</div>" +
+      ticketCard(2) +
+    "</div>";
+  bindRedo();
+  $("back1").addEventListener("click", stepQuestions);
+  $("next").addEventListener("click", async () => {
+    const b = $("next"); b.disabled = true; b.textContent = "Đang xử lý...";
+    try {
+      const method = document.querySelector("input[name=method]:checked").value;
+      const paid = await API.post("/orders/" + order.order_id + "/pay", { method });
+      clearInterval(timer);
+      order = paid; renderPaid();
+    } catch (err) {
+      showMsg($("msg"), err.message);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      b.disabled = false; b.innerHTML = "Thanh toán " + money(order.ticket_amount) + " " + ICON_GO;
+    }
+  });
+}
+
+// ---------- Ket qua ----------
+function renderPaid() {
+  paintHero(false);
+  $("page").innerHTML =
+    '<section class="pay-ok"><div class="pay-ok__check" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"/></svg></div>' +
+      "<h1>Đặt vé thành công</h1>" +
+      '<p class="muted">Đơn #' + order.order_id + (order.pay_at ? " · thanh toán lúc " + fmtDt(order.pay_at) : "") + ". Đưa mã QR dưới đây tại cổng để vào sự kiện.</p></section>" +
+    renderTickets(order) +
+    '<div class="actions pay-actions"><a class="btn" href="my-orders.html">Xem vé của tôi</a><a class="btn btn--ghost" href="index.html">Về trang chủ</a></div>';
+  drawQRs($("page"));
+}
+function renderClosed() {
+  paintHero(false);
+  $("page").innerHTML = '<section class="panel pay-closed">' +
+    "<h1>Hết thời gian giữ chỗ</h1>" +
+    '<p class="muted">Đơn #' + order.order_id + " đã bị huỷ hoặc quá thời gian thanh toán nên ghế đã được trả lại.</p>" +
+    '<div class="actions"><a class="btn" href="booking.html?id=' + order.event_id + '">Chọn vé lại</a><a class="btn btn--ghost" href="index.html">Về trang chủ</a></div>' +
+  "</section>";
+}
+
+async function load() {
+  try { order = await API.get("/orders/" + encodeURIComponent(orderId)); }
+  catch (err) { $("page").innerHTML = ""; showMsg($("msg"), err.message); return; }
+  if (!ev && order.event_id) {
+    try { ev = (await API.get("/events/" + order.event_id)).event; } catch (e) { ev = null; }
+  }
+  document.title = "Đặt vé: " + order.event_name + " | MyTickets";
+  if (order.order_status === "PAID") renderPaid();
+  else if (order.order_status === "PENDING" && Number(order.seconds_left) > 0) { paintHero(true); startClock(); stepQuestions(); }
+  else renderClosed();
+}
+
+(async () => {
+  const me = await initPage("customer");
+  if (!me) return;
+  if (!orderId) { $("page").innerHTML = ""; showMsg($("msg"), "Thiếu mã đơn hàng."); return; }
+  try { profile = await API.get("/profile"); } catch (e) { profile = null; }
+  load();
+})();
+</script>
+</body>
+</html>
