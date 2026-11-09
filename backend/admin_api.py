@@ -325,6 +325,34 @@ def init(app, query_all, query_one, get_connection, admin_required, ApiError):
             "WHERE event_id = %s", (name, sale, start, end, venue_id, event_id))
         return jsonify(ok=True)
 
+    @app.delete("/api/admin/events/<int:event_id>")
+    @admin_required
+    def admin_event_delete(event_id):
+        must_exist("SELECT 1 FROM event WHERE event_id = %s", (event_id,), "Không tìm thấy sự kiện")
+        # Ve da giu / da ban gan voi don hang cua khach: khong cho xoa
+        busy = query_one(
+            "SELECT COUNT(*) AS n FROM ticket WHERE event_id = %s AND ticket_status <> 'AVAILABLE'",
+            (event_id,))["n"]
+        if busy:
+            raise ApiError(f"Sự kiện đã có {busy} vé được giữ hoặc đã bán, không thể xoá")
+        # ticket -> event la ON DELETE RESTRICT nen xoa ve con trong truoc,
+        # roi gia khu (has_price), cuoi cung la su kien. Tat ca trong 1 transaction.
+        conn = get_connection()
+        try:
+            conn.begin()
+            with conn.cursor() as cur:
+                cur.execute("DELETE FROM ticket WHERE event_id = %s", (event_id,))
+                tickets = cur.rowcount
+                cur.execute("DELETE FROM has_price WHERE event_id = %s", (event_id,))
+                cur.execute("DELETE FROM event WHERE event_id = %s", (event_id,))
+            conn.commit()
+        except Exception:
+            conn.rollback()
+            raise
+        finally:
+            conn.close()
+        return jsonify(ok=True, deleted_tickets=tickets)
+
     # ==================================================================
     # 6. GIA VE THEO KHU (HAS_PRICE) + SINH VE (TICKET)
     #    Dat gia cho 1 khu = ghi has_price + tao 1 ve AVAILABLE cho moi ghe cua khu.

@@ -50,6 +50,14 @@ function longDate(start, end) {
   const sameDay = e && e.toDateString() === s.toDateString();
   return hm(s) + (sameDay ? " - " + hm(e) : "") + ", " + day;
 }
+// Noi dung gioi thieu admin soan: dong trong = doan moi, xuong dong = <br>
+function paragraphs(text) {
+  return String(text).split(/\n\s*\n/).map((p) => p.trim()).filter(Boolean)
+    .map((p) => "<p>" + esc(p).replace(/\n/g, "<br>") + "</p>").join("");
+}
+// Duong dan anh dat trong url("...") cua CSS
+const cssUrl = (u) => 'url("' + String(u).replace(/["\\]/g, "") + '")';
+
 function dayOf(s) {
   const d = parseDt(s);
   return d ? pad(d.getDate()) + "." + pad(d.getMonth() + 1) + "." + d.getFullYear() : "";
@@ -60,6 +68,9 @@ function dayOf(s) {
   const id = param("id");
   const box = document.getElementById("page");
   if (!id) { box.innerHTML = ""; showMsg(document.getElementById("msg"), "Thiếu mã sự kiện. Hãy chọn sự kiện từ trang chủ."); return; }
+
+  // Giao dien rieng do admin dat (anh, gioi thieu). Loi hoac chua co thi dung giao dien tu sinh.
+  const lookReq = API.get("/event-look/" + encodeURIComponent(id)).catch(() => ({}));
 
   let e;
   try {
@@ -81,6 +92,20 @@ function dayOf(s) {
   else if (!zones.length || left === 0) cta = '<button class="btn btn--block" disabled>Đã hết vé</button>';
   else cta = '<a class="btn btn--block" href="booking.html?id=' + e.event_id + '">Mua vé ngay</a>';
 
+  const look = (await lookReq) || {};
+  const posterImg = look.poster ? ";background-image:" + cssUrl(look.poster) : "";
+
+  // Anh nen phu mo phia sau phan dau trang (khong co thi dung anh poster)
+  const bgImg = look.background || look.poster;
+  if (bgImg) {
+    const bg = document.createElement("div");
+    bg.className = "ev-bg";
+    bg.setAttribute("aria-hidden", "true");
+    bg.style.backgroundImage = cssUrl(bgImg);
+    document.body.prepend(bg);
+    document.body.classList.add("has-ev-bg");
+  }
+
   const addr = e.address ? '<span class="ev__addr">' + esc(e.address) + "</span>" : "";
 
   box.innerHTML =
@@ -97,7 +122,8 @@ function dayOf(s) {
           cta +
         "</div>" +
       "</div>" +
-      '<div class="ev__poster banner" style="' + posterStyle(e.event_id) + '">' +
+      '<div class="ev__poster banner' + (look.poster ? " has-img" : "") + '" style="' + esc(posterStyle(e.event_id) + posterImg) + '"' +
+        (look.poster ? ' role="img" aria-label="Poster ' + esc(e.event_name) + '"' : "") + ">" +
         '<h2 class="banner__title">' + esc(e.event_name) + "</h2>" +
         '<p class="banner__date">' + dayOf(e.start_time) + "</p>" +
         '<p class="banner__venue">' + esc(e.venue_name) + "</p>" +
@@ -108,8 +134,10 @@ function dayOf(s) {
     '<section class="ev-sec">' +
       '<h2 class="ev-sec__head">Giới thiệu</h2>' +
       '<div class="ev-sec__body">' +
-        "<p><strong>" + esc(e.event_name) + "</strong> diễn ra lúc " + longDate(e.start_time, e.end_time) +
-        " tại <strong>" + esc(e.venue_name) + "</strong>" + (e.address ? ", " + esc(e.address) : "") + ".</p>" +
+        (look.description
+          ? '<div class="ev-desc">' + paragraphs(look.description) + "</div>"
+          : "<p><strong>" + esc(e.event_name) + "</strong> diễn ra lúc " + longDate(e.start_time, e.end_time) +
+            " tại <strong>" + esc(e.venue_name) + "</strong>" + (e.address ? ", " + esc(e.address) : "") + ".</p>") +
         (e.sale_start ? "<p>Vé được mở bán từ " + fmtDt(e.sale_start) + ".</p>" : "") +
         "<p>Mỗi tài khoản được mua tối đa 2 vé cho sự kiện này. Vé đã thanh toán không đổi hoặc hoàn tiền.</p>" +
       "</div>" +

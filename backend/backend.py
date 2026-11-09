@@ -381,8 +381,23 @@ def checkin():
 # ======================================================================
 import account
 account.init(app, query_one, get_connection, login_required, ApiError)
-import admin_api
+# API trang quan tri. Uu tien admin_api_1.py (ban moi, co chuc nang xoa su kien);
+# neu khong co file nay thi dung admin_api.py.
+try:
+    import admin_api_1 as admin_api
+except ImportError:
+    import admin_api
 admin_api.init(app, query_all, query_one, get_connection, admin_required, ApiError)
+print("Da nap API quan tri tu file:", os.path.basename(admin_api.__file__))
+
+# Giao dien su kien (anh poster, anh nen, gioi thieu): luu thanh file, KHONG dung database.
+# Thieu file event_look.py thi backend van chay binh thuong, chi chua co chuc nang nay.
+try:
+    import event_look
+    event_look.init(app, admin_required, ApiError, FRONTEND_DIR, query_one)
+    print("Da nap chuc nang giao dien su kien (event_look.py)")
+except ImportError:
+    print("Chua co file event_look.py: chuc nang giao dien su kien chua bat")
 
 # ======================================================================
 # 8. TIEN TRINH NEN: moi phut huy order qua han

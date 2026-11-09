@@ -9,6 +9,16 @@ const posterStyle = (id) => {
   const [c1, c2] = POSTER_COLORS[id % POSTER_COLORS.length];
   return "--c1:" + c1 + ";--c2:" + c2;
 };
+// Anh poster admin tai len (event_look.py): { "1": { poster: "/uploads/..." }, ... }
+let LOOKS = {};
+const cssUrl = (u) => 'url("' + String(u).replace(/["\\]/g, "") + '")';
+// Thuoc tinh class + style cho khung poster: co anh thi hien anh, khong thi dung mau tu sinh
+function posterAttrs(cls, id) {
+  const img = LOOKS[id] && LOOKS[id].poster;
+  return 'class="' + cls + (img ? " has-img" : "") + '" style="' +
+    esc(posterStyle(id) + (img ? ";background-image:" + cssUrl(img) : "")) + '"';
+}
+
 const ICON_CAL = '<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>';
 
 function statusPill(e) {
@@ -33,7 +43,7 @@ function fmtDay(s) {
 }
 
 function banner(e) {
-  return '<a class="banner" style="' + posterStyle(e.event_id) + '" href="event.html?id=' + e.event_id + '">' +
+  return '<a ' + posterAttrs("banner", e.event_id) + ' href="event.html?id=' + e.event_id + '">' +
     statusPill(e) +
     '<h2 class="banner__title">' + esc(e.event_name) + "</h2>" +
     '<p class="banner__date">' + fmtDay(e.start_time) + "</p>" +
@@ -85,7 +95,7 @@ function initCarousel() {
 function rankCard(e, i) {
   return '<a class="rank" href="event.html?id=' + e.event_id + '">' +
     '<span class="rank__no" aria-hidden="true">' + (i + 1) + "</span>" +
-    '<div class="rank__card"><div class="poster" style="' + posterStyle(e.event_id) + '">' +
+    '<div class="rank__card"><div ' + posterAttrs("poster", e.event_id) + ">" +
       '<h3 class="rank__name">' + esc(e.event_name) + "</h3></div>" +
     '<div class="rank__body"><div class="bar"><span style="width:' + e.sold_pct + '%"></span></div>' +
       '<p class="card__meta">Đã bán ' + e.sold_pct + "% vé</p></div></div></a>";
@@ -96,7 +106,7 @@ function card(e) {
     ? '<span class="countdown-chip" data-until="' + esc(e.sale_start) + '">' + untilText(e.sale_start) + "</span>"
     : "";
   return '<a class="card" href="event.html?id=' + e.event_id + '">' +
-    '<div class="poster" style="' + posterStyle(e.event_id) + '">' + statusPill(e) +
+    '<div ' + posterAttrs("poster", e.event_id) + ">" + statusPill(e) +
       '<span class="card__initials" aria-hidden="true">' + esc(e.event_name) + "</span></div>" +
     '<h3 class="card__title">' + esc(e.event_name) + "</h3>" +
     (e.min_price != null ? '<p class="card__price">Từ ' + money(e.min_price) + "</p>" : "") +
@@ -110,7 +120,9 @@ function card(e) {
   let events = [];
 
   try {
+    const lookReq = API.get("/event-look").catch(() => ({}));
     events = await API.get("/events");
+    LOOKS = (await lookReq) || {};
     // Lay gia thap nhat, so ve con lai, ti le da ban cua tung su kien
     const details = await Promise.all(events.map((e) =>
       API.get("/events/" + e.event_id).catch(() => null)));

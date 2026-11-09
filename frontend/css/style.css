@@ -579,3 +579,63 @@ tfoot td { font-weight: 800; border-bottom: 0; }
 @media (prefers-reduced-motion: reduce) {
   * { transition: none !important; animation: none !important; }
 }
+/* ======================================================================
+   Giao dien su kien do admin dat: anh poster, anh nen, gioi thieu
+   ====================================================================== */
+/* Khung poster / banner co anh that: thay nen tu sinh bang anh */
+.poster.has-img, .banner.has-img {
+  background-color: #0F0F13 !important;
+  background-size: cover !important;
+  background-position: center !important;
+  background-repeat: no-repeat !important;
+}
+.poster.has-img::after, .banner.has-img::after { display: none; }
+/* Anh poster thuong da co ten su kien, nen an chu tu sinh de khong de len anh */
+.banner.has-img .banner__title,
+.banner.has-img .banner__date,
+.banner.has-img .banner__venue,
+.poster.has-img .card__initials { display: none; }
+/* The "ban chay" chi co ten tren poster: giu chu, them bong toi o day de doc duoc */
+.rank__card .poster.has-img { box-shadow: inset 0 -70px 50px -30px rgba(0,0,0,.75); }
+
+/* Anh nen phu mo phia sau phan dau trang su kien */
+.ev-bg {
+  position: absolute; top: 0; left: 0; right: 0; height: 620px; z-index: 0;
+  background-size: cover; background-position: center; pointer-events: none;
+  filter: blur(26px) brightness(.5) saturate(1.2); transform: scale(1.08);
+  -webkit-mask-image: linear-gradient(#000 45%, transparent);
+          mask-image: linear-gradient(#000 45%, transparent);
+}
+body.has-ev-bg { overflow-x: hidden; }
+body.has-ev-bg main, body.has-ev-bg .footer { position: relative; z-index: 1; }
+/* 2 vet khuyet cua the ve to bang mau nen trang, tren anh nen se lo ra nen an di */
+body.has-ev-bg .ev__info::before, body.has-ev-bg .ev__info::after { display: none; }
+body.has-ev-bg .ev { box-shadow: 0 24px 60px rgba(0,0,0,.45); }
+
+.ev-desc p { margin: 0 0 12px; }
+.ev-desc { margin-bottom: 6px; }
+
+/* ---------- Admin: khung chinh giao dien ---------- */
+.field textarea {
+  display: block; width: 100%; margin-top: 6px; resize: vertical; min-height: 160px;
+  padding: 11px 13px; border: 1.5px solid var(--line); border-radius: 10px;
+  background: var(--surface-2); color: var(--ink); font: inherit; font-weight: 400; line-height: 1.55;
+}
+.field textarea:focus { outline: none; border-color: var(--accent); }
+.look-img { margin-bottom: 20px; }
+.look-img__label { margin: 0 0 6px; font-weight: 600; }
+.look-img__box {
+  aspect-ratio: 16 / 9; border-radius: 12px; border: 1.5px solid var(--line);
+  display: grid; place-items: center; padding: 12px; text-align: center;
+  background: radial-gradient(ellipse 60% 55% at 15% 100%, var(--c1), transparent 70%),
+              radial-gradient(ellipse 55% 60% at 90% 0%, var(--c2), transparent 70%), #140F24;
+}
+.look-img__box.has-img { background-size: cover; background-position: center; background-repeat: no-repeat; background-color: #0F0F13; }
+.look-img__empty { background: rgba(15,15,19,.65); color: #FFFFFF; padding: 6px 12px; border-radius: 8px; font-size: .88rem; font-weight: 600; }
+.look-img__row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; margin: 10px 0 4px; }
+.look-img__row .adm-danger { margin-right: 0; }
+.look-img__pick { cursor: pointer; }
+.look-img__pick:focus-within { outline: 3px solid var(--accent); outline-offset: 2px; }
+.look-view { margin-right: auto; }
+.look-img__file { position: absolute; width: 1px; height: 1px; opacity: 0; overflow: hidden; }
+.look-img__pick { position: relative; }

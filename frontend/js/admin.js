@@ -172,6 +172,7 @@ async function viewEvents(box) {
           ? '<div class="bar"><span style="width:' + pct + '%"></span></div><small class="muted">' + r.sold + "/" + r.total + "</small>"
           : '<small class="muted">Chưa đặt giá khu</small>') + "</td>" +
         '<td class="adm-actions"><button type="button" class="btn btn--ghost btn--small" data-edit="' + r.event_id + '">Sửa</button>' +
+        '<button type="button" class="btn btn--ghost btn--small" data-look="' + r.event_id + '">Giao diện</button>' +
         '<a class="btn btn--ghost btn--small" href="event.html?id=' + r.event_id + '" target="_blank">Xem</a></td></tr>';
     }).join("") : '<tr><td colspan="6" class="empty">Không có sự kiện phù hợp.</td></tr>';
   }
@@ -186,6 +187,8 @@ async function viewEvents(box) {
   $("evRows").addEventListener("click", (e) => {
     const b = e.target.closest("[data-edit]");
     if (b) openDrawer(rows.find((r) => String(r.event_id) === b.dataset.edit));
+    const l = e.target.closest("[data-look]");
+    if (l) openLook(rows.find((r) => String(r.event_id) === l.dataset.look));
   });
 }
 
@@ -201,15 +204,16 @@ function drawerHtml(venues) {
       '<div class="adm-drawer__body">' +
         '<label class="field">Tên sự kiện<input id="fName" maxlength="150"><span class="field__err" id="fNameErr"></span></label>' +
         '<label class="field">Địa điểm tổ chức<select id="fVenue">' + opts + '</select><span class="field__err" id="fVenueErr"></span></label>' +
-        '<div class="adm-2col">' +
-          '<label class="field">Bắt đầu<input id="fStart" type="datetime-local"><span class="field__err" id="fStartErr"></span></label>' +
-          '<label class="field">Kết thúc<input id="fEnd" type="datetime-local"><span class="field__err" id="fEndErr"></span></label>' +
-        "</div>" +
+        // Moi o ngay gio 1 dong: Bat dau, ben duoi la Ket thuc
+        '<label class="field">Bắt đầu<input id="fStart" type="datetime-local"><span class="field__err" id="fStartErr"></span></label>' +
+        '<label class="field">Kết thúc<input id="fEnd" type="datetime-local"><span class="field__err" id="fEndErr"></span></label>' +
         '<label class="field">Thời điểm mở bán<input id="fSale" type="datetime-local"><span class="field__err" id="fSaleErr"></span></label>' +
         '<p class="muted adm-hint">Sau khi tạo, vào mục <a href="#pricing">Giá vé</a> để đặt giá cho từng khu. Sự kiện chỉ bán được khi đã có giá khu.</p>' +
         '<p id="fMsg" class="msg" role="alert" hidden></p>' +
       "</div>" +
-      '<div class="adm-drawer__foot"><button type="button" class="btn btn--ghost" data-close>Huỷ</button>' +
+      '<div class="adm-drawer__foot">' +
+        '<button type="button" class="btn btn--ghost adm-danger" id="fDel" style="display:none">Xoá sự kiện</button>' +
+        '<button type="button" class="btn btn--ghost" data-close>Huỷ</button>' +
         '<button type="submit" class="btn" id="fSave">Tạo sự kiện</button></div>' +
     "</form></div>";
 }
@@ -220,6 +224,7 @@ function openDrawer(ev) {
   const d = $("drawer");
   $("drawerTitle").textContent = ev ? "Sửa sự kiện" : "Tạo sự kiện";
   $("fSave").textContent = ev ? "Lưu thay đổi" : "Tạo sự kiện";
+  $("fDel").style.display = ev ? "" : "none";   // chi hien nut Xoa khi dang sua
   $("fName").value = ev ? ev.event_name : "";
   $("fVenue").value = ev && ev.venue_id != null ? String(ev.venue_id) : "";
   $("fStart").value = ev ? toInput(ev.start_time) : "";
@@ -236,6 +241,7 @@ function openDrawer(ev) {
     d.addEventListener("click", (e) => { if (e.target.closest("[data-close]")) closeDrawer(); });
     document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !d.hidden) closeDrawer(); });
     $("evForm").addEventListener("submit", saveEvent);
+    $("fDel").addEventListener("click", deleteEvent);
   }
 }
 function closeDrawer() {
@@ -280,6 +286,201 @@ async function saveEvent(e) {
       : err.message);
   }
   btn.disabled = false; btn.textContent = label;
+}
+
+// =====================================================================
+//  Giao dien su kien: anh poster, anh nen, noi dung gioi thieu
+//  Luu thanh file tren may chay backend (event_look.py), khong dung database.
+// =====================================================================
+const LOOK_KINDS = [
+  ["poster", "Ảnh poster", "Hiện ở khung lớn trên trang sự kiện, banner và thẻ sự kiện ở trang chủ. Nên dùng ảnh ngang tỉ lệ 16:9, ví dụ 1280×720."],
+  ["background", "Ảnh nền", "Phủ mờ phía sau phần đầu trang sự kiện. Nếu để trống, trang dùng ảnh poster làm nền."],
+];
+const LOOK_MAX = 3 * 1024 * 1024;
+const LOOK_TYPES = ["image/jpeg", "image/png", "image/webp"];
+
+async function openLook(ev) {
+  if (!ev) return;
+  let look = {};
+  try { look = await API.get("/event-look/" + ev.event_id); }
+  catch (err) { alert(apiMissing(err) ? "Backend chưa có API giao diện. Hãy cập nhật backend.py và event_look.py rồi chạy lại." : err.message); return; }
+
+  // Trang thai tung anh: file moi chon / da bam xoa
+  const pick = { poster: null, background: null };
+  const drop = { poster: false, background: false };
+  const urls = [];                         // URL xem truoc tam, giai phong khi dong
+
+  let d = $("lookDrawer");
+  if (!d) {
+    d = document.createElement("div");
+    d.id = "lookDrawer"; d.className = "adm-drawer"; d.hidden = true;
+    document.body.appendChild(d);
+  }
+  const fallback = posterBg(ev.event_id);
+  d.innerHTML = '<div class="adm-drawer__bg" data-close></div>' +
+    '<form class="adm-drawer__box adm-drawer__box--wide" id="lookForm" novalidate aria-labelledby="lookTitle">' +
+      '<div class="adm-drawer__head"><h2 id="lookTitle">Giao diện: ' + esc(ev.event_name) + "</h2>" +
+        '<button type="button" class="adm-x" data-close aria-label="Đóng">×</button></div>' +
+      '<div class="adm-drawer__body">' +
+        LOOK_KINDS.map(([k, label, hint]) =>
+          '<div class="look-img">' +
+            '<p class="look-img__label">' + label + "</p>" +
+            '<div class="look-img__box" id="lk_' + k + '_box" style="' + fallback + '">' +
+              '<span class="look-img__empty" id="lk_' + k + '_empty">Chưa có ảnh, đang dùng nền tự sinh</span></div>' +
+            '<div class="look-img__row">' +
+              '<label class="btn btn--ghost btn--small look-img__pick">Chọn ảnh' +
+                '<input type="file" id="lk_' + k + '" accept="image/jpeg,image/png,image/webp" class="look-img__file"></label>' +
+              '<button type="button" class="btn btn--ghost btn--small adm-danger look-img__del" id="lk_' + k + '_del">Xoá ảnh</button>' +
+              '<small class="muted" id="lk_' + k + '_name"></small>' +
+            "</div>" +
+            '<small class="muted adm-hint">' + hint + " JPG, PNG hoặc WebP, tối đa 3 MB.</small>" +
+            '<span class="field__err" id="lk_' + k + 'Err"></span>' +
+          "</div>").join("") +
+        '<label class="field">Nội dung giới thiệu' +
+          '<textarea id="lkText" rows="9" maxlength="5000" placeholder="Viết giới thiệu về sự kiện: nghệ sĩ, chương trình, lưu ý cho khán giả..."></textarea>' +
+          '<small class="muted adm-hint">Để trống thì trang dùng đoạn giới thiệu tự sinh. Xuống dòng 1 lần để ngắt dòng, cách 1 dòng trống để sang đoạn mới. ' +
+            '<span id="lkCount"></span></small></label>' +
+        '<p id="lkMsg" class="msg" role="alert" hidden></p>' +
+      "</div>" +
+      '<div class="adm-drawer__foot">' +
+        '<a class="btn btn--ghost look-view" href="event.html?id=' + ev.event_id + '" target="_blank">Xem trang sự kiện</a>' +
+        '<button type="button" class="btn btn--ghost" data-close>Huỷ</button>' +
+        '<button type="submit" class="btn" id="lkSave">Lưu giao diện</button></div>' +
+    "</form>";
+
+  const close = () => {
+    d.hidden = true;
+    document.body.classList.remove("am-lock");
+    urls.forEach((u) => URL.revokeObjectURL(u));
+  };
+  d.querySelectorAll("[data-close]").forEach((x) => x.addEventListener("click", close));
+  d.onkeydown = (e) => { if (e.key === "Escape") close(); };
+
+  // Ve lai khung xem truoc cua 1 anh
+  function paint(k) {
+    const box = $("lk_" + k + "_box");
+    let src = null;
+    if (pick[k]) src = pick[k].url;
+    else if (!drop[k] && look[k]) src = look[k];
+    box.style.backgroundImage = src ? 'url("' + src + '")' : "";
+    box.classList.toggle("has-img", !!src);
+    $("lk_" + k + "_empty").style.display = src ? "none" : "";
+    $("lk_" + k + "_del").style.display = src ? "" : "none";
+    $("lk_" + k + "_name").textContent = pick[k] ? pick[k].file.name + " (chưa lưu)" : drop[k] ? "Sẽ xoá khi lưu" : "";
+  }
+
+  LOOK_KINDS.forEach(([k]) => {
+    $("lk_" + k).addEventListener("change", (e) => {
+      const file = e.target.files[0];
+      e.target.value = "";                         // cho phep chon lai cung 1 file
+      if (!file) return;
+      let err = "";
+      if (!LOOK_TYPES.includes(file.type)) err = "Chỉ nhận ảnh JPG, PNG hoặc WebP.";
+      else if (file.size > LOOK_MAX) err = "Ảnh nặng " + (file.size / 1048576).toFixed(1) + " MB, tối đa 3 MB.";
+      $("lk_" + k + "Err").textContent = err;
+      if (err) return;
+      const url = URL.createObjectURL(file);
+      urls.push(url);
+      pick[k] = { file, url };
+      drop[k] = false;
+      paint(k);
+    });
+    $("lk_" + k + "_del").addEventListener("click", () => {
+      if (pick[k]) pick[k] = null;                 // bo anh vua chon, quay ve anh dang dung
+      else drop[k] = true;                         // danh dau xoa anh dang dung
+      $("lk_" + k + "Err").textContent = "";
+      paint(k);
+    });
+    paint(k);
+  });
+
+  const text = $("lkText");
+  const count = () => { $("lkCount").textContent = text.value.length + "/5000 ký tự."; };
+  text.value = look.description || "";
+  text.addEventListener("input", count);
+  count();
+
+  $("lookForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const btn = $("lkSave");
+    btn.disabled = true; btn.textContent = "Đang lưu...";
+    showMsg($("lkMsg"), "");
+    try {
+      for (const [k] of LOOK_KINDS) {
+        if (pick[k]) await uploadLook(ev.event_id, k, pick[k].file);
+        else if (drop[k]) await API.request("DELETE", "/admin/event-look/" + ev.event_id + "/" + k);
+      }
+      if (text.value.trim() !== (look.description || "")) {
+        await API.request("PUT", "/admin/event-look/" + ev.event_id, { description: text.value });
+      }
+      close();
+      showMsg($("msg"), "Đã lưu giao diện cho “" + ev.event_name + "”.", "info");
+    } catch (err) {
+      showMsg($("lkMsg"), friendlySaveError(err));
+    }
+    btn.disabled = false; btn.textContent = "Lưu giao diện";
+  });
+
+  d.hidden = false;
+  document.body.classList.add("am-lock");
+  $("lkText").focus();
+}
+
+// Tai 1 anh len (form-data). API.request chi gui JSON nen goi fetch truc tiep.
+async function uploadLook(eventId, kind, file) {
+  const fd = new FormData();
+  fd.append("file", file);
+  const res = await fetch("/api/admin/event-look/" + eventId + "/" + kind, {
+    method: "POST", body: fd, credentials: "same-origin",
+  });
+  let data = null;
+  try { data = await res.json(); } catch (e) { /* khong co JSON */ }
+  if (!res.ok) {
+    const err = new Error((data && data.error) || "Lỗi máy chủ (" + res.status + ")");
+    err.status = res.status;
+    throw err;
+  }
+  return data;
+}
+
+// Mau nen tu sinh giong trang chu (dung khi su kien chua co anh)
+function posterBg(id) {
+  const c = [["#FF4D8D", "#6B2BD9"], ["#FFB547", "#E8466A"], ["#2EC4B6", "#3A47D5"],
+             ["#8E44FF", "#FF4D8D"], ["#FF7A45", "#7A1FA2"], ["#2BD07F", "#1F6FEB"]][id % 6];
+  return "--c1:" + c[0] + ";--c2:" + c[1];
+}
+
+// Xoa su kien: chi khi chua co ve nao duoc giu hoac da ban
+let deletingEvent = false;            // chan gui lenh xoa 2 lan (bam lien tiep / bam OK 2 lan)
+async function deleteEvent() {
+  const ev = editing;
+  if (!ev || deletingEvent) return;
+  if (ev.sold) {   // sold = tong ve - ve con trong (gom ca ve dang giu)
+    alert("Sự kiện “" + ev.event_name + "” đã có " + ev.sold + " vé được giữ hoặc đã bán nên không thể xoá.");
+    return;
+  }
+  const note = ev.total ? " " + ev.total + " vé còn trống và giá các khu của sự kiện cũng sẽ bị xoá." : "";
+  if (!confirm("Xoá sự kiện “" + ev.event_name + "”?" + note + " Thao tác này không thể hoàn tác.")) return;
+
+  deletingEvent = true;
+  const btn = $("fDel"), label = btn.textContent;
+  btn.disabled = true; btn.textContent = "Đang xoá...";
+  let ok = false;
+  try {
+    await API.request("DELETE", "/admin/events/" + ev.event_id);
+    ok = true;
+  } catch (err) {
+    if (err.status === 404 && /Không tìm thấy sự kiện/.test(err.message)) ok = true;   // da bi xoa truoc do
+    else if (err.status === 405) alert("Backend chưa có API xoá sự kiện. Hãy cập nhật admin_api_1.py và chạy lại backend.");
+    else alert(err.message);
+  }
+  deletingEvent = false;
+  btn.disabled = false; btn.textContent = label;
+  if (ok) {
+    closeDrawer();
+    await route();                   // route() xoa thong bao cu, nen hien thong bao sau khi tai lai
+    showMsg($("msg"), "Đã xoá sự kiện “" + ev.event_name + "”.", "info");
+  }
 }
 
 // =====================================================================
