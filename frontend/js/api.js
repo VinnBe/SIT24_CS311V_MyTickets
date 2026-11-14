@@ -40,6 +40,13 @@ const FRIENDLY = {
   "Mat khau phai co it nhat 6 ky tu": "Mật khẩu cần ít nhất 6 ký tự.",
   "Ban can dang nhap": "Bạn cần đăng nhập.",
   "Su kien khong ton tai": "Không tìm thấy sự kiện này.",
+  "Ma QR da het han, vui long tao ma moi": "Mã QR đã hết hạn. Hãy bấm Thanh toán lại trên trang web để tạo mã mới.",
+  "Ma QR khong hop le": "Mã QR không hợp lệ.",
+  "Phuong thuc nay khong thanh toan bang ma QR": "Phương thức này không thanh toán bằng mã QR.",
+  "Ma xac nhan khong dung hoac da het han": "Mã xác nhận không đúng hoặc đã hết hạn.",
+  "Vui long doi 60 giay truoc khi gui lai ma": "Vui lòng đợi 60 giây trước khi gửi lại mã.",
+  "Khong gui duoc email, vui long thu lai sau": "Không gửi được email, vui lòng thử lại sau.",
+  "Thieu truong: email": "Vui lòng nhập email.",
 };
 function friendly(msg) { return FRIENDLY[msg] || msg; }
 

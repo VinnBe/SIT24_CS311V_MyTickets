@@ -4,7 +4,7 @@ Moi schema la 1 dict {ten_truong: kieu}. Ham parse() kiem tra du truong,
 doi kieu (chuoi -> so) va ap cac luat don gian truoc khi goi database.
 """
 
-PAY_METHODS = ("MOMO", "BANKING", "CARD")
+PAY_METHODS = ("MOMO", "VNPAY", "BANKING", "CARD")
 MAX_TICKETS = 2
 
 LOGIN = {"username": str, "password": str}

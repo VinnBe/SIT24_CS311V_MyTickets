@@ -31,10 +31,20 @@
 .py-form { background: #38383F; border-radius: 12px; overflow: hidden; padding-bottom: 8px; }
 .py-form__bar { height: 42px; background: #4A4A52; }
 .py-q { display: block; border: 0; margin: 0; padding: 18px 16px 6px; }
-.py-q legend, .py-q__t { display: block; float: none; padding: 0; margin-bottom: 12px; font-size: .95rem; }
+.py-q legend, .py-q__t { display: block; float: none; padding: 0; margin-bottom: 14px; font-size: .95rem; line-height: 1.45; }
+/* legend mac dinh nam tren vien fieldset, bo qua padding: cho float de nam trong khung */
+fieldset.py-q { padding: 20px 16px 12px; }
+fieldset.py-q legend { float: left; width: 100%; margin-bottom: 22px; }
+fieldset.py-q .py-radio { clear: both; }
+.py-q__sub { display: block; margin-top: 2px; color: #A1A1AA; font-size: .78rem; line-height: 1.6; }
+label.py-q { padding-top: 22px; }
 .py-q i { color: var(--bad); font-style: normal; }
 .py-radio, .py-method { display: flex; align-items: center; gap: 12px; margin: 0 0 10px; cursor: pointer; }
-.py-radio input { width: 20px; height: 20px; accent-color: var(--accent); }
+.py-radio { line-height: 1.45; }
+/* O tron trang kieu radio (van la checkbox: bam lai de bo chon) */
+.py-radio input { appearance: none; -webkit-appearance: none; flex: none; width: 20px; height: 20px; margin: 0; border-radius: 50%; background: #FFF; border: 2px solid #FFF; cursor: pointer; transition: box-shadow .15s; }
+.py-radio input:checked { background: var(--accent); box-shadow: inset 0 0 0 3px #FFF; }
+.py-radio input:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
 .py-q input[type=email], .py-q input[type=tel] { display: block; width: 100%; padding: 12px 12px; border: 1.5px solid transparent; border-radius: 6px; background: #26262C; color: var(--ink); font: inherit; }
 .py-q input:focus { outline: none; border-color: var(--accent); }
 .py-err { display: block; margin-top: 6px; color: var(--bad); font-size: .86rem; font-weight: 600; }
@@ -123,6 +133,54 @@
 .pay-closed .actions { justify-content: center; }
 
 
+/* ---------- Popup thanh toan bang ma QR ---------- */
+.qp { position: fixed; inset: 0; z-index: 60; display: grid; place-items: center; padding: 16px; }
+.qp[hidden] { display: none; }
+.qp__bg { position: absolute; inset: 0; background: rgba(0,0,0,.72); }
+.qp__box { position: relative; width: min(400px, 100%); max-height: calc(100vh - 32px); overflow-y: auto; border-radius: 16px; background: #FFF; color: #27272A; box-shadow: 0 24px 60px rgba(0,0,0,.5); animation: am-in .2s ease-out; }
+.qp__head { display: flex; align-items: center; gap: 12px; padding: 14px 16px; color: #FFF; background: var(--qp-c, #A50064); }
+.qp__head h2 { flex: 1; margin: 0; font-size: 1.05rem; }
+.qp__x { width: 34px; height: 34px; border: 0; border-radius: 50%; background: rgba(255,255,255,.18); color: #FFF; font-size: 1.4rem; line-height: 1; cursor: pointer; }
+.qp__x:hover { background: rgba(255,255,255,.3); }
+.qp__x:focus-visible, .qp__alt:focus-visible { outline: 3px solid #12A05C; outline-offset: 2px; }
+.qp__body { padding: 18px 20px 20px; text-align: center; }
+.qp__amt { margin: 0; color: #71717A; font-size: .9rem; }
+.qp__amt strong { display: block; margin-top: 2px; color: #18181B; font-size: 1.6rem; font-variant-numeric: tabular-nums; }
+.qp__qr { position: relative; width: 236px; height: 236px; margin: 16px auto 12px; padding: 8px; border: 2px solid var(--qp-c, #A50064); border-radius: 14px; background: #FFF; }
+.qp__qr img, .qp__qr canvas { display: block; width: 216px !important; height: 216px !important; }
+.qp__qr.is-scanned > :not(.qp__done) { opacity: .15; }
+.qp__done { position: absolute; inset: 0; display: none; place-items: center; align-content: center; gap: 8px; color: #12A05C; font-weight: 700; }
+.qp__qr.is-scanned .qp__done { display: grid; }
+.qp__done svg { width: 56px; height: 56px; }
+.qp__status { display: flex; align-items: center; justify-content: center; gap: 10px; min-height: 1.5em; margin: 0 0 6px; font-weight: 600; }
+.qp__spin { width: 16px; height: 16px; flex: none; border: 2.5px solid #D4D4D8; border-top-color: var(--qp-c, #A50064); border-radius: 50%; animation: qp-spin .8s linear infinite; }
+@keyframes qp-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .qp__spin { animation-duration: 2.4s; } .qp__box { animation: none; } }
+.qp__time { margin: 0 0 14px; color: #71717A; font-size: .86rem; }
+.qp__time b { color: #F04452; font-variant-numeric: tabular-nums; }
+.qp__steps { margin: 0 0 14px; padding: 12px 14px 12px 32px; border-radius: 10px; background: #F4F4F5; text-align: left; font-size: .86rem; line-height: 1.6; }
+.qp__alt { background: none; border: 0; padding: 4px; color: #2F6FEB; font: inherit; font-size: .84rem; cursor: pointer; }
+.qp__alt:hover { text-decoration: underline; }
+.qp__err { margin: 0 0 10px; color: #B42318; font-weight: 600; font-size: .9rem; }
+
+/* ---------- Popup "Huy don hang?" (Chon lai ve) ---------- */
+.cx { position: fixed; inset: 0; z-index: 70; display: grid; place-items: center; padding: 16px; }
+.cx[hidden] { display: none; }
+.cx__bg { position: absolute; inset: 0; background: rgba(40,40,46,.72); }
+.cx__box { position: relative; width: min(312px, 100%); padding: 18px 24px 16px; border-radius: 8px; background: #FFF; color: #27272A; box-shadow: 0 20px 50px rgba(0,0,0,.45); animation: am-in .18s ease-out; }
+.cx__box h2 { margin: 0 0 14px; text-align: center; font-size: 1.05rem; color: #18181B; }
+.cx__box p { margin: 0 0 8px; font-size: .9rem; }
+.cx__box ul { margin: 0 0 20px; padding-left: 20px; font-size: .88rem; line-height: 1.45; }
+.cx__acts { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.cx__acts button { height: 40px; border-radius: 4px; font: inherit; font-weight: 700; cursor: pointer; }
+.cx__no { border: 1px solid #F04452; background: #FFF; color: #F04452; }
+.cx__no:hover { background: #FFF1F2; }
+.cx__no:disabled { opacity: .6; cursor: progress; }
+.cx__stay { border: 0; background: #2BD07F; color: #FFF; }
+.cx__stay:hover { background: #22B86E; }
+.cx__acts button:focus-visible { outline: 3px solid #12A05C; outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) { .cx__box { animation: none; } }
+
 @keyframes am-in { from { opacity: 0; transform: translateY(12px) scale(.98); } to { opacity: 1; transform: none; } }
 body.am-lock { overflow: hidden; }
 </style>
@@ -130,7 +188,7 @@ body.am-lock { overflow: hidden; }
 <body class="py-body">
 <div class="topbar-wrap">
   <header class="topbar">
-    <a class="brand" href="index.html">mytickets</a>
+    <a class="brand" href="index.html">Mytickets</a>
     <nav id="nav" class="nav" aria-label="Điều hướng chính"></nav>
   </header>
 </div>
@@ -155,9 +213,48 @@ body.am-lock { overflow: hidden; }
   <div id="page"><p class="empty">Đang tải đơn hàng...</p></div>
 </main>
 
-<footer class="footer">
-  <div class="wrap">mytickets, đồ án môn Nhập môn cơ sở dữ liệu. Mỗi tài khoản mua tối đa 2 vé cho mỗi sự kiện.</div>
-</footer>
+
+<!-- Popup "Chon lai ve": huy don dang giu cho roi quay lai chon ve -->
+<div class="cx" id="cx" hidden>
+  <div class="cx__bg" data-cstay></div>
+  <div class="cx__box" role="alertdialog" aria-modal="true" aria-labelledby="cxTitle" aria-describedby="cxText">
+    <h2 id="cxTitle">Hủy đơn hàng?</h2>
+    <div id="cxText">
+      <p>Bạn có chắc chắn muốn tiếp tục?</p>
+      <ul>
+        <li>Bạn sẽ mất vị trí mình đã lựa chọn.</li>
+        <li>Đơn hàng đang trong quá trình thanh toán hoặc đã thanh toán thành công cũng có thể bị huỷ.</li>
+      </ul>
+    </div>
+    <div class="cx__acts">
+      <button type="button" class="cx__no" id="cxNo">Hủy đơn</button>
+      <button type="button" class="cx__stay" id="cxStay" data-cstay>Ở lại</button>
+    </div>
+  </div>
+</div>
+
+<!-- Popup ma QR: chon MoMo / VNPAY roi bam Thanh toan -->
+<div class="qp" id="qp" hidden>
+  <div class="qp__bg" data-qclose></div>
+  <div class="qp__box" role="dialog" aria-modal="true" aria-labelledby="qpTitle">
+    <div class="qp__head">
+      <span class="py-logo" id="qpLogo" style="background:rgba(255,255,255,.2)"></span>
+      <h2 id="qpTitle">Quét mã để thanh toán</h2>
+      <button type="button" class="qp__x" data-qclose aria-label="Đóng">×</button>
+    </div>
+    <div class="qp__body">
+      <p class="qp__amt">Số tiền thanh toán<strong id="qpAmt"></strong></p>
+      <div class="qp__qr" id="qpQr">
+        <div class="qp__done" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M7 12.5l3.2 3.2L17 9"/></svg>Đã quét mã</div>
+      </div>
+      <p class="qp__status" id="qpStatus" role="status" aria-live="polite"></p>
+      <p class="qp__time">Mã hết hạn sau <b id="qpTime">--:--</b></p>
+      <ol class="qp__steps" id="qpSteps"></ol>
+      <p class="qp__err" id="qpErr" role="alert" hidden></p>
+      <button type="button" class="qp__alt" id="qpAlt">Không có điện thoại? Mở trang xác nhận trên máy này</button>
+    </div>
+  </div>
+</div>
 
 <script src="js/api.js"></script>
 <script src="js/auth.js"></script>
@@ -165,6 +262,7 @@ body.am-lock { overflow: hidden; }
 <script>
 /* Buoc 1 Bang cau hoi -> Buoc 2 Thanh toan (sp_pay_order) -> Nhan ve QR.
    Don het han / da huy -> bao va cho chon lai. */
+const QR_METHODS = ["MOMO", "VNPAY"];   // thanh toan bang ma QR (popup), CARD thanh toan ngay
 const METHODS = [
   ["MOMO", "Ví MoMo", "Quét mã QR bằng ứng dụng MoMo", "#A50064"],
   ["VNPAY", "VNPAY-QR", "Quét mã bằng ứng dụng ngân hàng", "#005BAA"],
@@ -177,7 +275,15 @@ const $ = (id) => document.getElementById(id);
 const orderId = param("order");
 let order = null, ev = null, profile = null, timer = null, left = 0;
 // Thong tin nguoi mua nam o bang customer(full_name, email, phone); sua o day se luu qua PUT /api/profile
-const answers = { agree: false, full_name: "", email: "", phone: "" };
+const answers = { terms: false, ads: false, seats: false, full_name: "", email: "", phone: "" };
+// 3 cau hoi dong y: [ma, cau hoi, dong giai thich, nhan o chon]
+const AGREE = [
+  ["terms", "Bạn đã đọc và hoàn toàn đồng ý “Điều khoản và điều kiện” của chương trình?", "Have you read and fully agree with T&C of the event", "Tôi đã đọc và đồng ý/ I have read and agree"],
+  ["ads", "Cho phép MyTickets và ban tổ chức sử dụng thông tin đặt vé để quảng cáo &amp; vận hành", "", "Tôi đồng ý"],
+  ["seats", "Nguyên tắc phân bổ ghế theo hệ thống và tình trạng chỗ ngồi thực tế",
+    "Ghế được hệ thống phân bổ theo nguyên tắc ưu tiên vị trí gần nhất, lần lượt theo thứ tự số ghế còn lại tại thời điểm giao dịch. Trong một số trường hợp, ghế trong cùng một đơn hàng có thể không nằm trên cùng một hàng tùy tình trạng thực tế.",
+    "Bằng việc mua vé, tôi xác nhận đã đọc, hiểu và đồng ý với nguyên tắc phân bổ ghế."],
+];
 Object.assign(FRIENDLY, {
   "Email da duoc su dung": "Email này đã được dùng cho tài khoản khác.",
   "Email khong hop le": "Email chưa hợp lệ.",
@@ -207,7 +313,7 @@ function startClock() {
   const tick = () => {
     $("mm").textContent = pad(Math.floor(Math.max(0, left) / 60));
     $("ss").textContent = pad(Math.max(0, left) % 60);
-    if (left <= 0) { clearInterval(timer); load(); return; }   // het gio: tai lai trang thai
+    if (left <= 0) { clearInterval(timer); closeQrPay(); load(); return; }   // het gio: tai lai trang thai
     left--;
   };
   tick();
@@ -231,14 +337,39 @@ function ticketCard(step) {
   "</aside>";
 }
 
+// Chon lai ve: hoi lai bang popup "Huy don hang?" roi huy don, ve trang chon ve
 function bindRedo() {
-  $("redo").addEventListener("click", async () => {
-    if (!confirm("Chọn lại vé? Đơn đang giữ chỗ sẽ bị huỷ và ghế được trả lại.")) return;
-    clearInterval(timer);
-    try { await API.post("/orders/" + order.order_id + "/cancel"); } catch (e) { /* don co the da het han */ }
-    location.href = "booking.html?id=" + order.event_id;
-  });
+  $("redo").addEventListener("click", openCancel);
 }
+let cxOpener = null;
+function openCancel() {
+  if (!order) return;
+  cxOpener = document.activeElement;
+  $("cx").hidden = false;
+  document.body.classList.add("am-lock");
+  $("cxStay").focus();
+}
+function closeCancel() {
+  $("cx").hidden = true;
+  document.body.classList.remove("am-lock");
+  if (cxOpener && cxOpener.focus && document.contains(cxOpener)) cxOpener.focus();
+}
+$("cx").addEventListener("click", (e) => { if (e.target.closest("[data-cstay]")) closeCancel(); });
+$("cx").addEventListener("keydown", (e) => {
+  if (e.key === "Escape") { e.preventDefault(); closeCancel(); }
+  if (e.key === "Tab") {                       // giu focus trong popup
+    const f = $("cxNo"), l = $("cxStay");
+    if (e.shiftKey && document.activeElement === f) { e.preventDefault(); l.focus(); }
+    else if (!e.shiftKey && document.activeElement === l) { e.preventDefault(); f.focus(); }
+  }
+});
+$("cxNo").addEventListener("click", async () => {
+  const b = $("cxNo"); b.disabled = true; b.textContent = "Đang hủy...";
+  clearInterval(timer);
+  closeQrPay();
+  try { await API.post("/orders/" + order.order_id + "/cancel"); } catch (e) { /* don co the da het han */ }
+  location.href = "booking.html?id=" + order.event_id;
+});
 
 // ---------- Buoc 1: bang cau hoi ----------
 // Cot trong database: customer.full_name VARCHAR(100), email VARCHAR(100) UNIQUE, phone VARCHAR(20)
@@ -246,6 +377,7 @@ function stepQuestions() {
   if (!answers.email && profile) {
     answers.full_name = profile.full_name; answers.email = profile.email; answers.phone = profile.phone;
   }
+  if (!answers.full_name && profile) answers.full_name = profile.full_name;   // ten nguoi nhan ve lay tu tai khoan
   const field = (id, label, type, ac, max, val) =>
     '<label class="py-q"><span class="py-q__t">' + label + ' <i>*</i></span>' +
     '<input id="' + id + '" type="' + type + '" autocomplete="' + ac + '" maxlength="' + max + '" placeholder="Điền câu trả lời của bạn" value="' + esc(val) + '">' +
@@ -254,24 +386,23 @@ function stepQuestions() {
     '<div class="py-grid">' +
       '<form class="py-form" id="qForm" novalidate>' +
         '<div class="py-form__bar"></div>' +
-        '<fieldset class="py-q"><legend>Bạn đã đọc và hoàn toàn đồng ý “Điều khoản và điều kiện” của chương trình? <i>*</i></legend>' +
-          '<label class="py-radio"><input type="checkbox" name="agree" value="1"' + (answers.agree ? " checked" : "") + "><span>Tôi đã đọc và đồng ý</span></label></fieldset>" +
-        field("qName", "Họ và tên người nhận vé?", "text", "name", 100, answers.full_name) +
-        field("qEmail", "Email của bạn?", "email", "email", 100, answers.email) +
-        field("qPhone", "Số điện thoại của bạn?", "tel", "tel", 20, answers.phone) +
-        '<p class="py-note">Họ tên, email và số điện thoại được lưu vào tài khoản của bạn. Nếu bạn sửa ở đây, thông tin tài khoản cũng được cập nhật.</p>' +
+        AGREE.map(([k, q, sub, label]) =>
+          '<fieldset class="py-q"><legend>' + q + " <i>*</i>" + (sub ? '<span class="py-q__sub">' + sub + "</span>" : "") + "</legend>" +
+          '<label class="py-radio"><input type="checkbox" name="' + k + '" value="1"' + (answers[k] ? " checked" : "") + "><span>" + label + "</span></label></fieldset>").join("") +
+        field("qEmail", "Email?", "email", "email", 100, answers.email) +
+        field("qPhone", "Số điện thoại", "tel", "tel", 20, answers.phone) +
+        '<p class="py-note">Email và số điện thoại được lưu vào tài khoản của bạn. Nếu bạn sửa ở đây, thông tin tài khoản cũng được cập nhật.</p>' +
       "</form>" +
       ticketCard(1) +
     "</div>";
   bindRedo();
 
   const read = () => {
-    answers.agree = !!document.querySelector("input[name=agree]:checked");
-    answers.full_name = $("qName").value.trim();
+    AGREE.forEach(([k]) => { answers[k] = !!document.querySelector("input[name=" + k + "]:checked"); });
     answers.email = $("qEmail").value.trim();
     answers.phone = $("qPhone").value.trim();
   };
-  const complete = () => answers.agree && answers.full_name && answers.email && answers.phone;
+  const complete = () => AGREE.every(([k]) => answers[k]) && answers.email && answers.phone;
   const paint = () => {
     read();
     $("hint").textContent = complete() ? "" : "Vui lòng trả lời tất cả câu hỏi để tiếp tục";
@@ -285,7 +416,6 @@ function stepQuestions() {
     read();
     if (!complete()) { $("hint").textContent = "Vui lòng trả lời tất cả câu hỏi để tiếp tục"; return; }
     const errs = {
-      qName: answers.full_name.length > 100 ? "Họ tên tối đa 100 ký tự" : "",
       qEmail: /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(answers.email) ? "" : "Email chưa đúng định dạng",
       qPhone: /^\+?[0-9 ]{9,15}$/.test(answers.phone) ? "" : "Số điện thoại chưa hợp lệ",
     };
@@ -301,7 +431,7 @@ function stepQuestions() {
         profile = await API.request("PUT", "/profile", { full_name: answers.full_name, email: answers.email, phone: answers.phone });
       } catch (err) {
         b.disabled = false; b.innerHTML = "Tiếp tục " + ICON_GO;
-        const k = /email/i.test(err.message) ? "qEmail" : /điện thoại/i.test(err.message) ? "qPhone" : /tên/i.test(err.message) ? "qName" : null;
+        const k = /email/i.test(err.message) ? "qEmail" : /điện thoại/i.test(err.message) ? "qPhone" : null;
         if (k) { $(k + "Err").textContent = err.message; $(k).focus(); } else showMsg($("msg"), err.message);
         return;
       }
@@ -326,16 +456,17 @@ function stepPay() {
             '<span class="py-logo" style="background:' + c + '">' + v + "</span>" +
             "<span>" + t + "<small>" + d + "</small></span></label>").join("") +
         "</fieldset>" +
-        '<p class="py-note">Đây là đồ án mô phỏng: bấm thanh toán sẽ ghi nhận thành công ngay, không trừ tiền thật.</p>' +
+        '<p class="py-note">Đây là đồ án mô phỏng, không trừ tiền thật. MoMo và VNPAY: quét mã QR bằng điện thoại rồi bấm Xác nhận. Thẻ: ghi nhận thành công ngay.</p>' +
       "</div>" +
       ticketCard(2) +
     "</div>";
   bindRedo();
   $("back1").addEventListener("click", stepQuestions);
   $("next").addEventListener("click", async () => {
+    const method = document.querySelector("input[name=method]:checked").value;
+    if (QR_METHODS.includes(method)) { openQrPay(method); return; }
     const b = $("next"); b.disabled = true; b.textContent = "Đang xử lý...";
     try {
-      const method = document.querySelector("input[name=method]:checked").value;
       const paid = await API.post("/orders/" + order.order_id + "/pay", { method });
       clearInterval(timer);
       order = paid; renderPaid();
@@ -346,6 +477,100 @@ function stepPay() {
     }
   });
 }
+
+// ---------- Popup ma QR ----------
+// Web tao link xac nhan da ky -> ve thanh ma QR. Dien thoai quet ma, mo pay-confirm.html,
+// bam Xac nhan. Trong luc do web hoi trang thai moi 2 giay; PAID thi bao thanh cong.
+let qp = null;   // { poll, clock, url, opener }
+
+async function openQrPay(method) {
+  const b = $("next"); b.disabled = true; b.textContent = "Đang tạo mã QR...";
+  let res;
+  try { res = await API.post("/orders/" + order.order_id + "/pay-qr", { method }); }
+  catch (err) {
+    showMsg($("msg"), err.message); window.scrollTo({ top: 0, behavior: "smooth" });
+    b.disabled = false; b.innerHTML = "Thanh toán " + money(order.ticket_amount) + " " + ICON_GO;
+    return;
+  }
+  b.disabled = false; b.innerHTML = "Thanh toán " + money(order.ticket_amount) + " " + ICON_GO;
+
+  const m = METHODS.find((x) => x[0] === method);
+  const box = $("qp");
+  box.style.setProperty("--qp-c", m[3]);
+  $("qpLogo").textContent = method;
+  $("qpTitle").textContent = "Thanh toán bằng " + m[1];
+  $("qpAmt").textContent = money(order.ticket_amount);
+  $("qpSteps").innerHTML = "<li>Mở ứng dụng " + (method === "MOMO" ? "MoMo" : "ngân hàng") + " hoặc camera trên điện thoại</li>" +
+    "<li>Quét mã QR ở trên</li><li>Bấm <b>Xác nhận thanh toán</b> trên điện thoại</li>";
+  $("qpErr").hidden = true;
+  const qr = $("qpQr");
+  qr.classList.remove("is-scanned");
+  qr.querySelectorAll(":scope > :not(.qp__done)").forEach((el) => el.remove());
+  if (window.QRCode) {
+    const holder = document.createElement("div");
+    qr.prepend(holder);
+    new QRCode(holder, { text: res.url, width: 216, height: 216, correctLevel: QRCode.CorrectLevel.M });
+    holder.title = "";
+  } else {
+    qr.insertAdjacentHTML("afterbegin", '<p class="qp__err">Không tải được thư viện vẽ mã QR. Dùng nút bên dưới để mở trang xác nhận.</p>');
+  }
+  setQpStatus(false);
+
+  closeQrPay();
+  qp = { url: res.url, opener: document.activeElement };
+  box.hidden = false;
+  document.body.classList.add("am-lock");
+  box.querySelector(".qp__x").focus();
+
+  // Dong ho: dung chung thoi gian giu cho cua don
+  const tick = () => { $("qpTime").textContent = pad(Math.floor(Math.max(0, left) / 60)) + ":" + pad(Math.max(0, left) % 60); };
+  tick(); qp.clock = setInterval(tick, 1000);
+  qp.poll = setInterval(checkQrPay, 2000);
+}
+
+function setQpStatus(scanned) {
+  $("qpQr").classList.toggle("is-scanned", scanned);
+  $("qpStatus").innerHTML = '<span class="qp__spin" aria-hidden="true"></span>' +
+    (scanned ? "Đã quét mã. Vui lòng bấm Xác nhận trên điện thoại" : "Đang chờ quét mã...");
+}
+
+let qpBusy = false;
+async function checkQrPay() {
+  if (!qp || qpBusy) return;
+  qpBusy = true;
+  try {
+    const st = await API.get("/orders/" + order.order_id + "/pay-status");
+    if (!qp) return;
+    $("qpErr").hidden = true;
+    if (st.status === "PAID") {
+      closeQrPay();
+      clearInterval(timer);
+      order = await API.get("/orders/" + order.order_id);
+      renderPaid();
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    } else if (st.status !== "PENDING") {
+      closeQrPay(); load();
+    } else if ($("qpQr").classList.contains("is-scanned") !== st.scanned) setQpStatus(st.scanned);
+  } catch (err) {
+    if (qp) { $("qpErr").textContent = "Mất kết nối, đang thử lại..."; $("qpErr").hidden = false; }
+  } finally {
+    qpBusy = false;
+  }
+}
+
+function closeQrPay() {
+  if (!qp) return;
+  clearInterval(qp.poll); clearInterval(qp.clock);
+  const opener = qp.opener;
+  qp = null;
+  $("qp").hidden = true;
+  document.body.classList.remove("am-lock");
+  if (opener && opener.focus && document.contains(opener)) opener.focus();
+}
+
+$("qp").addEventListener("click", (e) => { if (e.target.closest("[data-qclose]")) closeQrPay(); });
+document.addEventListener("keydown", (e) => { if (e.key === "Escape" && qp) closeQrPay(); });
+$("qpAlt").addEventListener("click", () => { if (qp) window.open(qp.url, "_blank", "noopener"); });
 
 // ---------- Ket qua ----------
 function renderPaid() {

@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>Xác nhận thanh toán | MyTickets</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;600;700;800&display=swap">
+<!-- Trang mo tren dien thoai sau khi quet ma QR o trang thanh toan (mo phong ung dung vi).
+     Khong can dang nhap: link chua token da ky (xem backend/pay_qr.py). -->
+<style>
+:root { --c: #A50064; --ok: #12A05C; --bad: #B42318; --ink: #18181B; --muted: #71717A; }
+* { box-sizing: border-box; }
+html, body { margin: 0; min-height: 100%; }
+body {
+  min-height: 100vh; font-family: "Be Vietnam Pro", system-ui, sans-serif; color: var(--ink);
+  background: linear-gradient(180deg, var(--c) 0 210px, #F4F4F5 210px);
+}
+.app { max-width: 460px; margin: 0 auto; padding: 18px 16px 32px; }
+.app__bar { display: flex; align-items: center; gap: 10px; color: #FFF; font-weight: 800; font-size: 1.05rem; }
+.app__logo { padding: 4px 10px; border-radius: 8px; background: rgba(255,255,255,.2); font-size: .8rem; letter-spacing: .03em; }
+.app__sub { margin: 6px 0 0; color: rgba(255,255,255,.85); font-size: .88rem; }
+
+/* Popup xac nhan */
+.sheet { margin-top: 26px; border-radius: 18px; background: #FFF; box-shadow: 0 18px 50px rgba(0,0,0,.18); overflow: hidden; animation: up .25s ease-out; }
+@keyframes up { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .sheet { animation: none; } }
+.sheet__top { padding: 22px 20px 16px; text-align: center; border-bottom: 1.5px dashed #E4E4E7; }
+.sheet__top p { margin: 0; color: var(--muted); font-size: .9rem; }
+.sheet__amt { display: block; margin-top: 4px; font-size: 2rem; font-weight: 800; font-variant-numeric: tabular-nums; }
+.sheet__dl { display: grid; grid-template-columns: auto 1fr; gap: 10px 16px; margin: 0; padding: 16px 20px; font-size: .92rem; }
+.sheet__dl dt { color: var(--muted); }
+.sheet__dl dd { margin: 0; text-align: right; font-weight: 600; overflow-wrap: anywhere; }
+.sheet__time { margin: 0 20px; padding: 10px 12px; border-radius: 10px; background: #FFF4E5; color: #8A4B00; font-size: .86rem; text-align: center; }
+.sheet__time b { font-variant-numeric: tabular-nums; }
+.sheet__acts { display: grid; gap: 10px; padding: 18px 20px 20px; }
+.btn { height: 50px; border: 0; border-radius: 12px; font: inherit; font-weight: 700; font-size: 1rem; cursor: pointer; }
+.btn--main { background: var(--c); color: #FFF; }
+.btn--main:disabled { opacity: .6; cursor: progress; }
+.btn--ghost { background: #F4F4F5; color: var(--ink); }
+.btn:focus-visible { outline: 3px solid var(--ok); outline-offset: 2px; }
+.err { margin: 0 20px; color: var(--bad); font-weight: 600; font-size: .9rem; text-align: center; }
+
+/* Ket qua */
+.done { padding: 34px 22px 26px; text-align: center; }
+.done__ic { width: 76px; height: 76px; margin: 0 auto 14px; border-radius: 50%; display: grid; place-items: center; color: #FFF; background: var(--ok); }
+.done__ic--bad { background: var(--bad); }
+.done__ic svg { width: 40px; height: 40px; }
+.done h1 { margin: 0 0 8px; font-size: 1.35rem; }
+.done p { margin: 0; color: var(--muted); line-height: 1.55; }
+.loading { padding: 40px 20px; text-align: center; color: var(--muted); }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="app__bar"><span class="app__logo" id="logo">VÍ</span><span id="appName">Thanh toán</span></div>
+  <p class="app__sub">Thanh toán cho MyTickets</p>
+  <main class="sheet" id="sheet" aria-live="polite"><p class="loading">Đang tải thông tin thanh toán...</p></main>
+</div>
+
+<script src="js/api.js"></script>
+<script>
+const APPS = { MOMO: ["Ví MoMo", "#A50064"], VNPAY: ["VNPAY-QR", "#005BAA"] };
+const ICON_OK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5L20 7"/></svg>';
+const ICON_BAD = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" aria-hidden="true"><path d="M7 7l10 10M17 7L7 17"/></svg>';
+const token = new URLSearchParams(location.search).get("t") || "";
+const sheet = document.getElementById("sheet");
+let left = 0, clock = null;
+
+function result(ok, title, text) {
+  clearInterval(clock);
+  sheet.innerHTML = '<div class="done"><div class="done__ic' + (ok ? "" : " done__ic--bad") + '">' + (ok ? ICON_OK : ICON_BAD) + "</div>" +
+    "<h1>" + esc(title) + "</h1><p>" + esc(text) + "</p></div>";
+}
+
+function render(d) {
+  const app = APPS[d.method] || ["Thanh toán", "#3F3F46"];
+  document.documentElement.style.setProperty("--c", app[1]);
+  document.getElementById("logo").textContent = d.method;
+  document.getElementById("appName").textContent = app[0];
+
+  sheet.innerHTML =
+    '<div class="sheet__top"><p>Xác nhận thanh toán</p><span class="sheet__amt">' + money(d.amount) + "</span></div>" +
+    '<dl class="sheet__dl">' +
+      "<dt>Người nhận</dt><dd>MyTickets</dd>" +
+      "<dt>Sự kiện</dt><dd>" + esc(d.event_name) + "</dd>" +
+      "<dt>Loại vé</dt><dd>" + esc(d.zone_name) + " × " + d.quantity + "</dd>" +
+      "<dt>Mã đơn</dt><dd>#" + d.order_id + "</dd>" +
+    "</dl>" +
+    '<p class="sheet__time">Giao dịch hết hạn sau <b id="time">--:--</b></p>' +
+    '<p class="err" id="err" role="alert" hidden></p>' +
+    '<div class="sheet__acts">' +
+      '<button type="button" class="btn btn--main" id="ok">Xác nhận thanh toán</button>' +
+      '<button type="button" class="btn btn--ghost" id="no">Huỷ</button>' +
+    "</div>";
+
+  left = Number(d.seconds_left) || 0;
+  const tick = () => {
+    document.getElementById("time").textContent = pad(Math.floor(Math.max(0, left) / 60)) + ":" + pad(Math.max(0, left) % 60);
+    if (left <= 0) { result(false, "Giao dịch đã hết hạn", "Đơn hàng đã quá thời gian giữ chỗ. Hãy đặt vé lại trên trang web."); return; }
+    left--;
+  };
+  tick(); clock = setInterval(tick, 1000);
+
+  const ok = document.getElementById("ok");
+  ok.focus();
+  ok.addEventListener("click", async () => {
+    ok.disabled = true; ok.textContent = "Đang xử lý...";
+    try {
+      await API.post("/pay-qr/" + encodeURIComponent(token) + "/confirm");
+      result(true, "Thanh toán thành công", "Bạn đã thanh toán " + money(d.amount) + ". Quay lại trang web MyTickets để xem vé.");
+    } catch (err) {
+      const e = document.getElementById("err");
+      e.textContent = err.message; e.hidden = false;
+      ok.disabled = false; ok.textContent = "Xác nhận thanh toán";
+    }
+  });
+  document.getElementById("no").addEventListener("click", () =>
+    result(false, "Đã huỷ giao dịch", "Bạn chưa bị trừ tiền. Có thể quét lại mã trên trang web để thanh toán."));
+}
+
+(async () => {
+  if (!token) { result(false, "Mã QR không hợp lệ", "Không tìm thấy thông tin thanh toán trong mã đã quét."); return; }
+  try {
+    const d = await API.get("/pay-qr/" + encodeURIComponent(token));
+    if (d.status === "PAID") result(true, "Đơn đã được thanh toán", "Đơn #" + d.order_id + " đã thanh toán trước đó. Quay lại trang web để xem vé.");
+    else if (d.status !== "PENDING" || !Number(d.seconds_left)) result(false, "Giao dịch đã hết hạn", "Đơn hàng đã bị huỷ hoặc quá thời gian giữ chỗ.");
+    else render(d);
+  } catch (err) {
+    result(false, "Không mở được giao dịch", err.message);
+  }
+})();
+</script>
+</body>
+</html>

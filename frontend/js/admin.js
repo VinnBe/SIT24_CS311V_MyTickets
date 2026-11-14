@@ -6,12 +6,12 @@ const ICONS = {
   venues: I('<path d="M3 21h18M5 21V8l7-5 7 5v13M9 21v-6h6v6"/>'),
   zones: I('<rect x="3" y="3" width="8" height="8" rx="1"/><rect x="13" y="3" width="8" height="8" rx="1"/><rect x="3" y="13" width="18" height="8" rx="1"/>'),
   seats: I('<path d="M6 10V6a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v4M4 10h16v5H4zM6 15v5M18 15v5"/>'),
+  layout: I('<path d="M3 6l6-3 6 3 6-3v15l-6 3-6-3-6 3z"/><path d="M9 3v15M15 6v15"/>'),
   events: I('<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>'),
   pricing: I('<path d="M20 12l-8 8-9-9V3h8z"/><circle cx="7.5" cy="7.5" r="1.5"/>'),
   tickets: I('<path d="M3 9a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v1.5a1.5 1.5 0 0 0 0 3V15a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-1.5a1.5 1.5 0 0 0 0-3z"/>'),
   orders: I('<path d="M6 2h12l2 4v15a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6z"/><path d="M4 6h16M9 11h6M9 15h6"/>'),
   customers: I('<circle cx="9" cy="8" r="4"/><path d="M2 21c1-4 4-6 7-6s6 2 7 6M17 4a4 4 0 0 1 0 8M22 21c-.5-2.5-2-4.3-4-5.2"/>'),
-  checkin: I('<path d="M4 7V5a1 1 0 0 1 1-1h2M17 4h2a1 1 0 0 1 1 1v2M20 17v2a1 1 0 0 1-1 1h-2M7 20H5a1 1 0 0 1-1-1v-2M7 12h10"/>'),
   reports: I('<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>'),
 };
 
@@ -21,8 +21,8 @@ const MENU = [
   ["", [["dashboard", "Dashboard", "Dashboard"]]],
   ["Sự kiện & vé", [["events", "Sự kiện", "Quản lý sự kiện"], ["pricing", "Giá vé", "Quản lý giá vé"], ["tickets", "Vé", "Quản lý vé"]]],
   ["Khách & đơn", [["orders", "Đơn hàng", "Quản lý đơn hàng"], ["customers", "Khách hàng", "Quản lý khách hàng"]]],
-  ["Địa điểm", [["venues", "Địa điểm", "Quản lý địa điểm"], ["zones", "Khu vực", "Quản lý khu vực"], ["seats", "Ghế", "Quản lý ghế"]]],
-  ["Vận hành", [["checkin", "Soát vé", "Soát vé"], ["reports", "Báo cáo", "Báo cáo thống kê"]]],
+  ["Địa điểm", [["venues", "Địa điểm", "Quản lý địa điểm"], ["layout", "Sơ đồ", "Tạo sơ đồ sự kiện"], ["zones", "Khu vực", "Quản lý khu vực"], ["seats", "Ghế", "Quản lý ghế"]]],
+  ["Vận hành", [["reports", "Báo cáo", "Báo cáo thống kê"]]],
 ];
 const TITLES = Object.fromEntries(MENU.flatMap(([, items]) => items.map(([k, , full]) => [k, full])));
 
@@ -36,7 +36,6 @@ const TODO = {
   tickets: ["Danh sách vé", "Mã QR", "Trạng thái: Còn trống (AVAILABLE), Đang giữ (RESERVED), Đã bán (SOLD)"],
   orders: ["Xem danh sách đơn", "Xem chi tiết đơn", "Theo dõi thanh toán"],
   customers: ["Xem thông tin khách hàng", "Tìm kiếm khách hàng"],
-  checkin: ["Quét mã QR", "Xác thực vé", "Kiểm tra vé đã sử dụng"],
   reports: ["Doanh thu", "Số vé đã bán", "Số vé còn trống"],
 };
 
@@ -173,6 +172,7 @@ async function viewEvents(box) {
           : '<small class="muted">Chưa đặt giá khu</small>') + "</td>" +
         '<td class="adm-actions"><button type="button" class="btn btn--ghost btn--small" data-edit="' + r.event_id + '">Sửa</button>' +
         '<button type="button" class="btn btn--ghost btn--small" data-look="' + r.event_id + '">Giao diện</button>' +
+        (r.venue_id != null ? '<a class="btn btn--ghost btn--small" href="#layout" data-evenue="' + r.venue_id + '">Sơ đồ</a>' : "") +
         '<a class="btn btn--ghost btn--small" href="event.html?id=' + r.event_id + '" target="_blank">Xem</a></td></tr>';
     }).join("") : '<tr><td colspan="6" class="empty">Không có sự kiện phù hợp.</td></tr>';
   }
@@ -189,6 +189,8 @@ async function viewEvents(box) {
     if (b) openDrawer(rows.find((r) => String(r.event_id) === b.dataset.edit));
     const l = e.target.closest("[data-look]");
     if (l) openLook(rows.find((r) => String(r.event_id) === l.dataset.look));
+    const m = e.target.closest("[data-evenue]");
+    if (m) PICK.venue = m.dataset.evenue;
   });
 }
 
@@ -620,7 +622,8 @@ async function viewVenues(box) {
     $("vRows").innerHTML = shown.length ? shown.map((r) =>
       "<tr><td><strong>" + esc(r.venue_name) + "</strong></td><td>" + esc(r.address) + "</td>" +
       '<td class="num">' + (r.zone_count || 0) + '</td><td class="num">' + Number(r.capacity || 0).toLocaleString("vi-VN") + "</td>" +
-      '<td class="adm-actions"><a class="btn btn--ghost btn--small" href="#zones" data-venue="' + r.venue_id + '">Xem khu</a>' +
+      '<td class="adm-actions"><a class="btn btn--ghost btn--small" href="#layout" data-venue="' + r.venue_id + '">Sơ đồ</a>' +
+      '<a class="btn btn--ghost btn--small" href="#zones" data-venue="' + r.venue_id + '">Xem khu</a>' +
       '<button type="button" class="btn btn--ghost btn--small" data-edit="' + r.venue_id + '">Sửa</button></td></tr>').join("")
       : '<tr><td colspan="5" class="empty">' + (venues.length ? "Không có địa điểm phù hợp." : "Chưa có địa điểm nào. Bấm “Thêm địa điểm” để bắt đầu.") + "</td></tr>";
   }
@@ -1145,6 +1148,8 @@ function viewTodo(box, key) {
 
 // ---------- Dieu huong ----------
 async function route() {
+  // Dang o Tao so do va con thay doi chua luu: hoi truoc khi roi trang
+  if (typeof loGuard === "function" && !loGuard()) return;
   const key = (location.hash.slice(1) || "dashboard");
   const k = TITLES[key] ? key : "dashboard";
   renderSide(k);
@@ -1159,6 +1164,7 @@ async function route() {
     else if (k === "venues") await viewVenues(box);
     else if (k === "zones") await viewZones(box);
     else if (k === "seats") await viewSeats(box);
+    else if (k === "layout") await viewLayout(box);
     else if (k === "pricing") await viewPricing(box);
     else if (k === "tickets") await viewTickets(box);
     else if (k === "orders") await viewOrders(box);

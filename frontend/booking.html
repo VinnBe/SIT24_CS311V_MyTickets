@@ -8,6 +8,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;600;700;800&display=swap">
 <link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/layout.css">
 <!-- Giao dien rieng cua trang nay: de trong file de khong phu thuoc ban style.css -->
 <style>
 /* ---------- Trang chon ve (booking.html), bo cuc kieu ticketbox ---------- */
@@ -139,7 +140,7 @@ body.am-lock { overflow: hidden; }
 <body class="bk-body">
 <div class="topbar-wrap">
   <header class="topbar">
-    <a class="brand" href="index.html">mytickets</a>
+    <a class="brand" href="index.html">Mytickets</a>
     <nav id="nav" class="nav" aria-label="Điều hướng chính"></nav>
   </header>
 </div>
@@ -205,6 +206,7 @@ body.am-lock { overflow: hidden; }
 
 <script src="js/api.js"></script>
 <script src="js/auth.js"></script>
+<script src="js/seatmap.js"></script>
 <script>
 /* Chon khu (so do + hop noi chon so luong) -> POST /api/orders (sp_place_order giu cho) -> pay.html */
 const MAX_PER_ORDER = 2;   // khop ck_order_qty: ticket_quantity BETWEEN 1 AND 2
@@ -212,6 +214,7 @@ const MAX_PER_ORDER = 2;   // khop ck_order_qty: ticket_quantity BETWEEN 1 AND 2
 const TIER_COLORS = ["#8BE9FB", "#4FC6E3", "#2B8FB0", "#9B6BFF", "#8F4FD6", "#5E35A6", "#B020E0", "#D34FE8"];
 const $ = (id) => document.getElementById(id);
 let ev = null, zones = [], picked = null, qty = 0, draft = null, draftQty = 0, zoom = 1;
+let layout = null;          // so do admin da ve (Tao so do su kien); null thi dung so do tu sinh ben duoi
 
 function longDate(start, end) {
   const s = parseDt(start), e = parseDt(end);
@@ -221,9 +224,26 @@ function longDate(start, end) {
     ", " + s.getDate() + " Tháng " + (s.getMonth() + 1) + ", " + s.getFullYear();
 }
 
-// So do: san khau o tren, moi bac gia la 1 hang, khu dat nhat gan san khau nhat,
+// So do admin da ve: to mau khu theo bac gia, khu chua ban / het ve mau xam
+function drawLayoutMap() {
+  const map = $("map");
+  map.className = "bk-svgmap";
+  map.innerHTML = SeatMap.render(layout, (it) => {
+    const z = zones.find((x) => x.zone_id === it.zone_id);
+    if (!z) return { fill: "#3A3A42", sub: "Không mở bán", cls: "is-off", attrs: ' aria-hidden="true"' };
+    const out = z.available <= 0;
+    if (out) return { fill: "#3A3A42", sub: "Hết vé", cls: "is-off", attrs: ' role="img" aria-label="' + esc(z.zone_name) + ', hết vé"' };
+    return {
+      fill: z.color, sub: money(z.price), cls: picked && picked.zone_id === z.zone_id ? "is-on" : "",
+      attrs: ' data-zone="' + z.zone_id + '" role="button" tabindex="0" aria-label="' + esc(z.zone_name) + ", " + money(z.price) + ", còn " + z.available + ' vé"',
+    };
+  });
+}
+
+// So do tu sinh: san khau o tren, moi bac gia la 1 hang, khu dat nhat gan san khau nhat,
 // do rong moi khu ti le voi so ghe
 function drawMap() {
+  if (layout) return drawLayoutMap();
   const tiers = [...new Set(zones.map((z) => z.price))].sort((a, b) => b - a);
   $("map").innerHTML = '<div class="bk-stage">SÂN KHẤU</div>' +
     tiers.map((p) => '<div class="bk-row">' + zones.filter((z) => z.price === p).map((z) => {
@@ -340,6 +360,13 @@ async function placeOrder(btn) {
   }
   if (!zones.length) { $("map").innerHTML = ""; showMsg($("msg"), "Sự kiện chưa có khu nào được mở bán.", "info"); return; }
 
+  // Dung so do admin da ve neu co it nhat 1 khu tren so do dang mo ban
+  try {
+    const lr = await API.get("/events/" + encodeURIComponent(id) + "/layout");
+    const L = lr && lr.layout;
+    if (L && (L.items || []).some((it) => it.type === "zone" && zones.some((z) => z.zone_id === it.zone_id))) layout = L;
+  } catch (err) { /* backend chua co API so do: dung so do tu sinh */ }
+
   drawMap(); drawPrices(); drawSide(); setZoom(1);
 
   // Bam vao khu tren so do / bang gia -> mo hop chon so luong
@@ -350,6 +377,11 @@ async function placeOrder(btn) {
     if (zb) setZoom(zb.dataset.zoom === "0" ? 1 : zoom + Number(zb.dataset.zoom) * 0.2);
   });
 
+  // Khu tren so do SVG la <g role="button">: bam Enter / Space de chon
+  $("map").addEventListener("keydown", (e) => {
+    const g = e.target.closest("[data-zone]");
+    if (g && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); openModal(zones.find((z) => String(z.zone_id) === g.dataset.zone)); }
+  });
   $("modal").addEventListener("click", (e) => { if (e.target.closest("[data-close]")) closeModal(); });
   document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !$("modal").hidden) closeModal(); });
   $("mMinus").addEventListener("click", () => { draftQty--; paintModal(); });

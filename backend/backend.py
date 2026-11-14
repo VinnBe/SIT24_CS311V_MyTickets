@@ -14,6 +14,8 @@ Chay: python backend.py  ->  mo http://localhost:5000
 import hmac
 import logging
 import os
+import threading
+import time
 from datetime import date, datetime
 from decimal import Decimal
 from functools import wraps
@@ -23,6 +25,7 @@ from apscheduler.schedulers.background import BackgroundScheduler
 from dotenv import load_dotenv
 from flask import Flask, jsonify, request, session
 from flask.json.provider import DefaultJSONProvider
+from pymysql.constants import SERVER_STATUS
 from pymysql.cursors import DictCursor
 from werkzeug.exceptions import HTTPException
 from werkzeug.security import check_password_hash, generate_password_hash
@@ -53,7 +56,7 @@ ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "")
 # ======================================================================
 # 2. DATABASE
 # ======================================================================
-def get_connection():
+def _new_connection():
     kwargs = dict(
         host=DB_HOST, port=DB_PORT, user=DB_USER, password=DB_PASSWORD,
         database=DB_NAME, charset="utf8mb4", cursorclass=DictCursor,
@@ -63,6 +66,67 @@ def get_connection():
     if DB_SSL_CA:
         kwargs["ssl"] = {"ca": DB_SSL_CA}
     return pymysql.connect(**kwargs)
+
+
+# ---------- Pool ket noi ----------
+# Mo 1 ket noi toi database cloud mat 1-2 giay (bat tay SSL qua mang), con chay
+# 1 truy van chi ~0.1 giay. Truoc day moi truy van mo ket noi moi nen trang admin
+# (goi nhieu API, moi API vai truy van) rat cham. Pool giu lai ket noi da mo de
+# dung lai. Cac file khac van goi get_connection() ... conn.close() nhu cu:
+# close() khong dong that ma tra ket noi ve pool.
+_POOL_MAX = 8            # so ket noi ranh giu lai toi da
+_POOL_IDLE_PING = 30     # ket noi ranh lau hon so giay nay thi ping truoc khi dung
+_pool = []               # [(connection, thoi diem tra ve)]
+_pool_lock = threading.Lock()
+
+
+class _PooledConnection:
+    """Boc connection that: moi thu chuyen cho connection, rieng close() tra ve pool."""
+
+    def __init__(self, raw):
+        self._raw = raw
+
+    def __getattr__(self, name):
+        return getattr(self._raw, name)
+
+    def close(self):
+        raw, self._raw = self._raw, None
+        if raw is None:
+            return
+        try:
+            if raw.server_status & SERVER_STATUS.SERVER_STATUS_IN_TRANS:
+                raw.rollback()  # bo giao dich dang do (neu co loi giua chung)
+        except Exception:
+            _close_quietly(raw)
+            return
+        with _pool_lock:
+            if len(_pool) < _POOL_MAX:
+                _pool.append((raw, time.monotonic()))
+                return
+        _close_quietly(raw)
+
+
+def _close_quietly(raw):
+    try:
+        raw.close()
+    except Exception:
+        pass
+
+
+def get_connection():
+    while True:
+        with _pool_lock:
+            item = _pool.pop() if _pool else None
+        if item is None:
+            return _PooledConnection(_new_connection())
+        raw, since = item
+        if time.monotonic() - since < _POOL_IDLE_PING:
+            return _PooledConnection(raw)
+        try:
+            raw.ping(reconnect=False)       # ket noi cu co the da bi server dong
+            return _PooledConnection(raw)
+        except Exception:
+            _close_quietly(raw)             # bo ket noi hong, lay cai khac
 
 
 def query_all(sql, params=None):
@@ -381,6 +445,14 @@ def checkin():
 # ======================================================================
 import account
 account.init(app, query_one, get_connection, login_required, ApiError)
+
+# Quen mat khau: gui ma OTP qua email (xem password_reset.py)
+import password_reset
+password_reset.init(app, query_one, get_connection, ApiError)
+
+# Thanh toan bang ma QR: dien thoai quet ma -> bam Xac nhan (xem pay_qr.py)
+import pay_qr
+pay_qr.init(app, query_one, call_proc, order_detail, login_required, ApiError)
 # API trang quan tri. Uu tien admin_api_1.py (ban moi, co chuc nang xoa su kien);
 # neu khong co file nay thi dung admin_api.py.
 try:
@@ -398,6 +470,18 @@ try:
     print("Da nap chuc nang giao dien su kien (event_look.py)")
 except ImportError:
     print("Chua co file event_look.py: chuc nang giao dien su kien chua bat")
+
+# So do su kien (tai ban ve co san / tu thiet ke): hinh ve luu thanh file,
+# "Luu & tao ghe" dong bo khu va ghe vao database. Xem venue_layout.py.
+# Loi khi nap thi in ro nguyen nhan ra terminal, backend van chay tiep.
+try:
+    import venue_layout
+    venue_layout.init(app, admin_required, ApiError, FRONTEND_DIR, query_one, query_all, get_connection)
+    print("Da nap chuc nang so do su kien (venue_layout.py)")
+except Exception:
+    import traceback
+    print("KHONG nap duoc venue_layout.py (so do su kien). Loi:")
+    traceback.print_exc()
 
 # ======================================================================
 # 8. TIEN TRINH NEN: moi phut huy order qua han
@@ -423,5 +507,10 @@ def start_scheduler():
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
     start_scheduler()
+    # HOST=0.0.0.0 (mac dinh) de dien thoai cung Wi-Fi mo duoc link trong ma QR thanh toan.
+    # Chi muon dung tren may nay thi dat HOST=127.0.0.1 trong .env.
+    host = os.environ.get("HOST", "0.0.0.0")
     print("MyTickets dang chay tai http://localhost:5000")
-    app.run(host="127.0.0.1", port=5000, debug=False)
+    if host == "0.0.0.0":
+        print("Dien thoai cung Wi-Fi mo duoc qua: http://" + pay_qr._lan_ip() + ":5000")
+    app.run(host=host, port=5000, debug=False, threaded=True)
