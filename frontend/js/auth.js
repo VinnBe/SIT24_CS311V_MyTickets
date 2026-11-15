@@ -86,7 +86,6 @@
     <form id="amLogin" novalidate>
       ${textField("amLUser", "Nhập tên đăng nhập", { ac: "username" })}
       ${pwField("amLPass", "Nhập mật khẩu", "current-password")}
-      <p class="am__forgot"><a href="#" data-mode="forgot">Quên mật khẩu?</a></p>
       <button type="submit" class="am__submit" id="amLSubmit" disabled>Tiếp tục</button>
       <p class="am__switch">Chưa có tài khoản?<br><a href="register.html" data-mode="register">Tạo tài khoản ngay</a></p>
     </form>
@@ -100,22 +99,6 @@
       ${pwField("amRConfirm", "Nhập lại mật khẩu", "new-password")}
       <button type="submit" class="am__submit" id="amRSubmit" disabled>Tạo tài khoản</button>
       <p class="am__switch">Đã có tài khoản?<br><a href="login.html" data-mode="login">Đăng nhập</a></p>
-    </form>
-
-    <form id="amForgot" novalidate hidden>
-      <p class="am__hint">Nhập email bạn đã dùng khi đăng ký. Chúng tôi sẽ gửi mã xác nhận gồm 6 chữ số để đặt lại mật khẩu.</p>
-      ${textField("amFEmail", "Email", { type: "email", ac: "email" })}
-      <button type="submit" class="am__submit" id="amFSubmit" disabled>Gửi mã xác nhận</button>
-      <p class="am__switch"><a href="login.html" data-mode="login">Quay lại đăng nhập</a></p>
-    </form>
-
-    <form id="amReset" novalidate hidden>
-      <p class="am__hint am__hint--ok" id="amResetHint"></p>
-      ${textField("amOtp", "Mã xác nhận (6 chữ số)", { ac: "one-time-code", inputmode: "numeric" })}
-      ${pwField("amNPass", "Mật khẩu mới (ít nhất 6 ký tự)", "new-password")}
-      ${pwField("amNConfirm", "Nhập lại mật khẩu mới", "new-password")}
-      <button type="submit" class="am__submit" id="amNSubmit" disabled>Đặt lại mật khẩu</button>
-      <p class="am__switch">Chưa nhận được mã?<br><a href="#" id="amResend">Gửi lại mã</a></p>
     </form>
 
     <p class="am__fine">Mỗi tài khoản mua tối đa 2 vé cho mỗi sự kiện. Vé được giữ chỗ 15 phút sau khi đặt.</p>
@@ -161,14 +144,6 @@
         [$("amRPass"), (v) => v.length >= 6 ? "" : "Mật khẩu cần ít nhất 6 ký tự"],
         [$("amRConfirm"), (v) => v === $("amRPass").value ? "" : "Mật khẩu nhập lại chưa khớp"],
       ],
-      forgot: [
-        [$("amFEmail"), (v) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim()) ? "" : "Email chưa đúng định dạng"],
-      ],
-      reset: [
-        [$("amOtp"), (v) => /^\d{6}$/.test(v.trim()) ? "" : "Mã xác nhận gồm 6 chữ số"],
-        [$("amNPass"), (v) => v.length >= 6 ? "" : "Mật khẩu cần ít nhất 6 ký tự"],
-        [$("amNConfirm"), (v) => v === $("amNPass").value ? "" : "Mật khẩu nhập lại chưa khớp"],
-      ],
     };
   }
 
@@ -186,10 +161,8 @@
     function syncButtons() {
       $("amLSubmit").disabled = !R.login.every(([i]) => i.value.trim() !== "");
       $("amRSubmit").disabled = !R.register.every(([i]) => i.value.trim() !== "");
-      $("amFSubmit").disabled = !R.forgot.every(([i]) => i.value.trim() !== "");
-      $("amNSubmit").disabled = !R.reset.every(([i]) => i.value.trim() !== "");
     }
-    for (const key of ["login", "register", "forgot", "reset"]) {
+    for (const key of ["login", "register"]) {
       R[key].forEach(([input, check]) => {
         input.addEventListener("input", () => {
           if (input.getAttribute("aria-invalid") === "true") setErr(input, check(input.value));
@@ -272,66 +245,6 @@
       }
     });
 
-    bindForgot(R);
-  }
-
-  // Quen mat khau, buoc 1: gui ma OTP ve email
-  let resetEmail = "";
-  async function sendOtp(email) {
-    await API.post("/forgot-password", { email });
-    resetEmail = email;
-    $("amResetHint").textContent = "Nếu " + email + " đã đăng ký tài khoản, mã xác nhận đã được gửi tới hộp thư (hãy xem cả mục Spam). Mã có hiệu lực 10 phút.";
-  }
-
-  function bindForgot(R) {
-    $("amForgot").addEventListener("submit", async (e) => {
-      e.preventDefault();
-      showMsg("");
-      if (!setErr($("amFEmail"), R.forgot[0][1]($("amFEmail").value))) { $("amFEmail").focus(); return; }
-      const btn = $("amFSubmit");
-      setBusy(btn, true, "Đang gửi mã...");
-      try {
-        await sendOtp($("amFEmail").value.trim());
-        setBusy(btn, false);
-        setMode("reset");
-      } catch (err) {
-        showMsg(err.message);
-        setBusy(btn, false);
-      }
-    });
-
-    $("amResend").addEventListener("click", async (e) => {
-      e.preventDefault();
-      showMsg("");
-      try {
-        await sendOtp(resetEmail);
-        showMsg("Đã gửi lại mã xác nhận.", true);
-        $("amOtp").focus();
-      } catch (err) { showMsg(err.message); }
-    });
-
-    // Buoc 2: nhap ma + mat khau moi
-    $("amReset").addEventListener("submit", async (e) => {
-      e.preventDefault();
-      showMsg("");
-      let bad = null;
-      R.reset.forEach(([i, c]) => { if (!setErr(i, c(i.value)) && !bad) bad = i; });
-      if (bad) { bad.focus(); return; }
-      const btn = $("amNSubmit");
-      setBusy(btn, true, "Đang đặt lại...");
-      try {
-        await API.post("/reset-password", {
-          email: resetEmail, otp: $("amOtp").value.trim(), new_password: $("amNPass").value,
-        });
-        setBusy(btn, false);
-        ["amOtp", "amNPass", "amNConfirm"].forEach((id) => { $(id).value = ""; });
-        setMode("login");
-        showMsg("Đặt lại mật khẩu thành công. Hãy đăng nhập bằng mật khẩu mới.", true);
-      } catch (err) {
-        showMsg(err.message);
-        setBusy(btn, false);
-      }
-    });
   }
 
   // Thanh cong: trang rieng thi di tiep, popup tren trang thi tai lai de thanh dieu huong cap nhat
@@ -345,10 +258,8 @@
     showMsg("");
     $("amLogin").hidden = m !== "login";
     $("amRegister").hidden = m !== "register";
-    $("amForgot").hidden = m !== "forgot";
-    $("amReset").hidden = m !== "reset";
-    $("amTitle").textContent = { login: "Đăng nhập", register: "Đăng ký", forgot: "Quên mật khẩu", reset: "Đặt lại mật khẩu" }[m];
-    const first = { login: "amLUser", register: "amRName", forgot: "amFEmail", reset: "amOtp" }[m];
+    $("amTitle").textContent = { login: "Đăng nhập", register: "Đăng ký" }[m];
+    const first = { login: "amLUser", register: "amRName" }[m];
     $(first).focus();
   }
 

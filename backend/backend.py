@@ -446,10 +446,6 @@ def checkin():
 import account
 account.init(app, query_one, get_connection, login_required, ApiError)
 
-# Quen mat khau: gui ma OTP qua email (xem password_reset.py)
-import password_reset
-password_reset.init(app, query_one, get_connection, ApiError)
-
 # Thanh toan bang ma QR: dien thoai quet ma -> bam Xac nhan (xem pay_qr.py)
 import pay_qr
 pay_qr.init(app, query_one, call_proc, order_detail, login_required, ApiError)

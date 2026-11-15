@@ -112,13 +112,3 @@ CREATE TABLE ticket (
     CONSTRAINT fk_ticket_order FOREIGN KEY (order_id)
         REFERENCES orders (order_id) ON DELETE RESTRICT
 );
--- Ma OTP quen mat khau (chi luu ban bam). Moi user toi da 1 ma dang hieu luc.
-CREATE TABLE password_reset (
-    user_id     INT PRIMARY KEY,
-    otp_hash    VARCHAR(255) NOT NULL,
-    expires_at  DATETIME NOT NULL,
-    attempts    INT NOT NULL DEFAULT 0,
-    created_at  DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT fk_reset_user FOREIGN KEY (user_id)
-        REFERENCES users (user_id) ON DELETE CASCADE
-);
