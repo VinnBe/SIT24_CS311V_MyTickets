@@ -338,10 +338,36 @@ async function openLook(ev) {
             '<small class="muted adm-hint">' + hint + " JPG, PNG hoặc WebP, tối đa 3 MB.</small>" +
             '<span class="field__err" id="lk_' + k + 'Err"></span>' +
           "</div>").join("") +
-        '<label class="field">Nội dung giới thiệu' +
-          '<textarea id="lkText" rows="9" maxlength="5000" placeholder="Viết giới thiệu về sự kiện: nghệ sĩ, chương trình, lưu ý cho khán giả..."></textarea>' +
-          '<small class="muted adm-hint">Để trống thì trang dùng đoạn giới thiệu tự sinh. Xuống dòng 1 lần để ngắt dòng, cách 1 dòng trống để sang đoạn mới. ' +
-            '<span id="lkCount"></span></small></label>' +
+        '<div class="field rt-ed">' +
+          '<div class="rt-ed__head">' +
+            '<label for="lkText">Nội dung giới thiệu</label>' +
+            '<div class="rt-tabs" role="tablist">' +
+              '<button type="button" role="tab" class="rt-tab is-on" id="lkTabEdit" aria-selected="true">Soạn thảo</button>' +
+              '<button type="button" role="tab" class="rt-tab" id="lkTabView" aria-selected="false">Xem trước</button>' +
+            "</div>" +
+          "</div>" +
+          '<div class="rt-bar" id="lkBar" role="toolbar" aria-label="Định dạng nội dung">' +
+            '<button type="button" class="rt-btn" data-fmt="h" title="Tiêu đề (dòng bắt đầu bằng ##)">Tiêu đề</button>' +
+            '<button type="button" class="rt-btn" data-fmt="b" title="In đậm (Ctrl+B)"><strong>B</strong></button>' +
+            '<label class="rt-btn rt-btn--img" title="Chèn ảnh tại vị trí con trỏ">Chèn ảnh' +
+              '<input type="file" id="lkImg" accept="image/jpeg,image/png,image/webp" multiple class="look-img__file"></label>' +
+            '<small class="muted rt-bar__state" id="lkImgState" aria-live="polite"></small>' +
+          "</div>" +
+          '<textarea id="lkText" rows="12" maxlength="10000" placeholder="Viết giới thiệu về sự kiện: nghệ sĩ, chương trình, lưu ý cho khán giả..."></textarea>' +
+          '<div class="rt-view ev-desc" id="lkView" hidden></div>' +
+          '<small class="muted adm-hint">Để trống thì trang dùng đoạn giới thiệu tự sinh. Cách 1 dòng trống để sang đoạn mới. ' +
+            "Có thể dán (Ctrl+V) hoặc kéo thả ảnh vào khung soạn thảo. Ảnh JPG, PNG, WebP tối đa 3 MB. " +
+            '<span id="lkCount"></span></small>' +
+          '<span class="field__err" id="lkImgErr"></span>' +
+        "</div>" +
+        '<div class="field rt-ed">' +
+          '<div class="rt-ed__head">' +
+            '<label for="lkNotes">Lưu ý cho người mua</label>' +
+            '<button type="button" class="rt-btn" id="lkNotesReset">Khôi phục mặc định</button>' +
+          "</div>" +
+          '<textarea id="lkNotes" rows="4" maxlength="2000"></textarea>' +
+          '<small class="muted adm-hint" id="lkNotesHint"></small>' +
+        "</div>" +
         '<p id="lkMsg" class="msg" role="alert" hidden></p>' +
       "</div>" +
       '<div class="adm-drawer__foot">' +
@@ -397,24 +423,48 @@ async function openLook(ev) {
   });
 
   const text = $("lkText");
-  const count = () => { $("lkCount").textContent = text.value.length + "/5000 ký tự."; };
+  const count = () => { $("lkCount").textContent = text.value.length + "/10000 ký tự."; };
   text.value = look.description || "";
   text.addEventListener("input", count);
   count();
+  const contentEd = setupContentEditor(ev.event_id, text, count);
+
+  // Luu y cho nguoi mua: chua sua thi hien doan mac dinh (tu cap nhat theo ngay mo ban)
+  const notes = $("lkNotes");
+  const defNotes = RichText.defaultNotes(ev.sale_start);
+  const notesHint = () => {
+    $("lkNotesHint").textContent = notes.value.trim() === defNotes
+      ? "Đang dùng đoạn mặc định, ngày mở bán tự cập nhật khi bạn đổi giờ bán. Hiện cuối phần Giới thiệu."
+      : notes.value.trim() ? "Đã sửa: nội dung giữ nguyên kể cả khi đổi giờ mở bán. Định dạng giống phần giới thiệu."
+      : "Để trống: trang sự kiện sẽ ẩn phần lưu ý này.";
+  };
+  notes.value = typeof look.notes === "string" ? look.notes : defNotes;
+  notes.addEventListener("input", notesHint);
+  $("lkNotesReset").addEventListener("click", () => { notes.value = defNotes; notesHint(); notes.focus(); });
+  notesHint();
 
   $("lookForm").addEventListener("submit", async (e) => {
     e.preventDefault();
     const btn = $("lkSave");
     btn.disabled = true; btn.textContent = "Đang lưu...";
     showMsg($("lkMsg"), "");
+    if (contentEd.busy()) {
+      showMsg($("lkMsg"), "Ảnh đang được tải lên, vui lòng đợi xong rồi lưu.");
+      btn.disabled = false; btn.textContent = "Lưu giao diện";
+      return;
+    }
     try {
       for (const [k] of LOOK_KINDS) {
         if (pick[k]) await uploadLook(ev.event_id, k, pick[k].file);
         else if (drop[k]) await API.request("DELETE", "/admin/event-look/" + ev.event_id + "/" + k);
       }
-      if (text.value.trim() !== (look.description || "")) {
-        await API.request("PUT", "/admin/event-look/" + ev.event_id, { description: text.value });
-      }
+      // Da tai anh len thi luon luu lai de backend don anh khong con dung
+      const change = {};
+      if (contentEd.uploaded() || text.value.trim() !== (look.description || "")) change.description = text.value;
+      // Trung doan mac dinh -> gui null de giu che do mac dinh (ngay mo ban tu cap nhat)
+      const n = notes.value.trim() === defNotes ? null : notes.value;
+      if (n !== (typeof look.notes === "string" ? look.notes : null)) change.notes = n;
+      if (Object.keys(change).length) await API.request("PUT", "/admin/event-look/" + ev.event_id, change);
       close();
       showMsg($("msg"), "Đã lưu giao diện cho “" + ev.event_name + "”.", "info");
     } catch (err) {
@@ -428,11 +478,129 @@ async function openLook(ev) {
   $("lkText").focus();
 }
 
+// Trinh soan noi dung gioi thieu: nut dinh dang, chen anh (chon / dan / keo tha), xem truoc.
+// Anh duoc tai len ngay de co duong dan, roi chen dong ![chu thich](url) vao vi tri con tro.
+function setupContentEditor(eventId, text, onChange) {
+  let pending = 0, uploadedAny = false;
+  const view = $("lkView"), bar = $("lkBar");
+  const tabEdit = $("lkTabEdit"), tabView = $("lkTabView");
+
+  // Thay doan dang boi den bang `insert`, dat con tro sau `selFrom..selTo` trong doan moi
+  function replaceSel(insert, selFrom, selTo) {
+    const a = text.selectionStart, b = text.selectionEnd;
+    text.setRangeText(insert, a, b, "end");
+    if (selFrom != null) text.setSelectionRange(a + selFrom, a + selTo);
+    text.focus();
+    onChange();
+  }
+
+  // Chen 1 khoi (anh) tren dong rieng, cach doan truoc/sau 1 dong trong
+  function insertBlock(block) {
+    const a = text.selectionStart, v = text.value;
+    const before = v.slice(0, a), after = v.slice(text.selectionEnd);
+    const pre = !before ? "" : before.endsWith("\n\n") ? "" : before.endsWith("\n") ? "\n" : "\n\n";
+    const post = after.startsWith("\n\n") ? "" : after.startsWith("\n") ? "\n" : "\n\n";
+    replaceSel(pre + block + post);
+  }
+
+  function bold() {
+    const sel = text.value.slice(text.selectionStart, text.selectionEnd) || "chữ in đậm";
+    replaceSel("**" + sel + "**", 2, 2 + sel.length);
+  }
+
+  function heading() {
+    // Them "## " vao dau dong dang dung (bam lan nua thi bo)
+    const v = text.value, pos = text.selectionStart;
+    const start = pos ? v.lastIndexOf("\n", pos - 1) + 1 : 0;
+    if (v.startsWith("## ", start)) text.setRangeText("", start, start + 3, "end");
+    else text.setRangeText("## ", start, start, "end");
+    text.focus();
+    onChange();
+  }
+
+  function state() {
+    $("lkImgState").textContent = pending ? "Đang tải " + pending + " ảnh..." : "";
+  }
+
+  async function addImages(files) {
+    for (const file of files) {
+      let err = "";
+      if (!LOOK_TYPES.includes(file.type)) err = "“" + file.name + "”: chỉ nhận ảnh JPG, PNG hoặc WebP.";
+      else if (file.size > LOOK_MAX) err = "“" + file.name + "” nặng " + (file.size / 1048576).toFixed(1) + " MB, tối đa 3 MB.";
+      $("lkImgErr").textContent = err;
+      if (err) continue;
+
+      pending++; state();
+      try {
+        const res = await uploadFile("/api/admin/event-images/" + eventId, file);
+        uploadedAny = true;
+        // Ten file goc (bo duoi) lam chu thich goi y, admin sua lai duoc
+        const alt = file.name && file.name !== "image.png"
+          ? file.name.replace(/\.[^.]+$/, "").replace(/[\[\]\n]/g, " ").slice(0, 80) : "";
+        insertBlock("![" + alt + "](" + res.url + ")");
+      } catch (e) {
+        $("lkImgErr").textContent = friendlySaveError(e);
+      }
+      pending--; state();
+    }
+  }
+
+  bar.addEventListener("click", (e) => {
+    const b = e.target.closest("[data-fmt]");
+    if (!b) return;
+    if (b.dataset.fmt === "b") bold(); else heading();
+  });
+  $("lkImg").addEventListener("change", (e) => {
+    const files = [...e.target.files];
+    e.target.value = "";
+    addImages(files);
+  });
+  text.addEventListener("keydown", (e) => {
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "b") { e.preventDefault(); bold(); }
+  });
+  text.addEventListener("paste", (e) => {
+    const files = [...(e.clipboardData ? e.clipboardData.files : [])].filter((f) => f.type.startsWith("image/"));
+    if (files.length) { e.preventDefault(); addImages(files); }
+  });
+  text.addEventListener("dragover", (e) => {
+    if (e.dataTransfer && [...e.dataTransfer.types].includes("Files")) { e.preventDefault(); text.classList.add("is-drop"); }
+  });
+  text.addEventListener("dragleave", () => text.classList.remove("is-drop"));
+  text.addEventListener("drop", (e) => {
+    text.classList.remove("is-drop");
+    const files = [...(e.dataTransfer ? e.dataTransfer.files : [])].filter((f) => f.type.startsWith("image/"));
+    if (!files.length) return;
+    e.preventDefault();
+    text.focus();
+    addImages(files);
+  });
+
+  // Tab Soan thao / Xem truoc
+  function show(preview) {
+    tabEdit.classList.toggle("is-on", !preview); tabEdit.setAttribute("aria-selected", String(!preview));
+    tabView.classList.toggle("is-on", preview); tabView.setAttribute("aria-selected", String(preview));
+    text.hidden = preview; bar.hidden = preview; view.hidden = !preview;
+    if (preview) {
+      view.innerHTML = text.value.trim()
+        ? RichText.render(text.value)
+        : '<p class="muted">Chưa có nội dung, trang sự kiện sẽ dùng đoạn giới thiệu tự sinh.</p>';
+    } else text.focus();
+  }
+  tabEdit.addEventListener("click", () => show(false));
+  tabView.addEventListener("click", () => show(true));
+
+  return { busy: () => pending > 0, uploaded: () => uploadedAny };
+}
+
 // Tai 1 anh len (form-data). API.request chi gui JSON nen goi fetch truc tiep.
 async function uploadLook(eventId, kind, file) {
+  return uploadFile("/api/admin/event-look/" + eventId + "/" + kind, file);
+}
+
+async function uploadFile(url, file) {
   const fd = new FormData();
   fd.append("file", file);
-  const res = await fetch("/api/admin/event-look/" + eventId + "/" + kind, {
+  const res = await fetch(url, {
     method: "POST", body: fd, credentials: "same-origin",
   });
   let data = null;

@@ -25,6 +25,7 @@
 
 <script src="js/api.js"></script>
 <script src="js/auth.js"></script>
+<script src="js/rich-text.js"></script>
 <script>
 /* Trang chi tiet su kien: the thong tin + poster, gioi thieu, thong tin ve tung khu */
 const POSTER_COLORS = [
@@ -46,11 +47,6 @@ function longDate(start, end) {
   const day = s.getDate() + " Tháng " + (s.getMonth() + 1) + ", " + s.getFullYear();
   const sameDay = e && e.toDateString() === s.toDateString();
   return hm(s) + (sameDay ? " - " + hm(e) : "") + ", " + day;
-}
-// Noi dung gioi thieu admin soan: dong trong = doan moi, xuong dong = <br>
-function paragraphs(text) {
-  return String(text).split(/\n\s*\n/).map((p) => p.trim()).filter(Boolean)
-    .map((p) => "<p>" + esc(p).replace(/\n/g, "<br>") + "</p>").join("");
 }
 // Duong dan anh dat trong url("...") cua CSS
 const cssUrl = (u) => 'url("' + String(u).replace(/["\\]/g, "") + '")';
@@ -132,11 +128,11 @@ function dayOf(s) {
       '<h2 class="ev-sec__head">Giới thiệu</h2>' +
       '<div class="ev-sec__body">' +
         (look.description
-          ? '<div class="ev-desc">' + paragraphs(look.description) + "</div>"
+          ? '<div class="ev-desc">' + RichText.render(look.description) + "</div>"
           : "<p><strong>" + esc(e.event_name) + "</strong> diễn ra lúc " + longDate(e.start_time, e.end_time) +
             " tại <strong>" + esc(e.venue_name) + "</strong>" + (e.address ? ", " + esc(e.address) : "") + ".</p>") +
-        (e.sale_start ? "<p>Vé được mở bán từ " + fmtDt(e.sale_start) + ".</p>" : "") +
-        "<p>Mỗi tài khoản được mua tối đa 2 vé cho sự kiện này. Vé đã thanh toán không đổi hoặc hoàn tiền.</p>" +
+        // Luu y cho nguoi mua: admin sua duoc; chua sua thi dung doan mac dinh, "" = an
+        '<div class="ev-desc">' + RichText.render(typeof look.notes === "string" ? look.notes : RichText.defaultNotes(e.sale_start)) + "</div>" +
       "</div>" +
     "</section>" +
 
